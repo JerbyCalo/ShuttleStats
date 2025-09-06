@@ -39,6 +39,8 @@ https://shuttlestats.vercel.app/
 - **Loading & Empty States:** Polished UX for all data-fetching scenarios
 
 ## 🗂️ Project Structure
+
+```
 ShuttleStats/
 │   .gitattributes
 │   .gitignore
@@ -68,32 +70,11 @@ ShuttleStats/
 │   │   └───icons
 │   │
 │   ├───config
-│   │       firebase-config.js
-│   │       firestore.rules
 │   │
 │   ├───css
-│   │       style.css
-│   │       user-greeting.css
-│   │
+│   │      
 │   └───js
-│           achievement.js
-│           app.js
-│           auth-utils.js
-│           coach-dashboard.js
-│           goals.js
-│           loading.js
-│           login.js
-│           matches.js
-│           modals.js
-│           my-players.js
-│           navigation.js
-│           player-dashboard.js
-│           progress.js
-│           role-manager.js
-│           schedule.js
-│           toast.js
-│           training.js
-│           user-greeting.js
+```
 
 ## 🛠️ Tech Stack
 
