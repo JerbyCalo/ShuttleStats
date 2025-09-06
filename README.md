@@ -1,115 +1,153 @@
-# ShuttleStats - Deployment Guide
+# 🏸 ShuttleStats
 
-A comprehensive badminton training and performance tracking web application.
+A modern, full-stack badminton performance tracker for players and coaches. Built with vanilla JavaScript, Firebase, and deployed on Vercel.
 
-## 🚀 Quick Deploy to Vercel
+## 🌐 Live Demo
+
+https://shuttlestats.vercel.app/
+
+## ✨ Features
+
+### 🔐 Authentication & User Management
+- **Role-Based Registration & Login:** Sign up as a `Player` or `Coach`
+- **Secure Firebase Authentication:** Email/Password and Google sign-in options
+- **Session Management:** Persistent login state with secure session storage
+
+### 👤 Player Experience
+- **Personal Dashboard:** Overview of recent activity, stats, and progress
+- **Training Session Tracking:** Log and review all training sessions with full CRUD operations
+- **Match History:** Record competitive matches, track wins/losses, and analyze performance
+- **Goal Setting:** Set, track, and manage personal badminton goals
+- **Schedule View:** Calendar and list views of upcoming training and matches
+- **Progress & Analytics:** Visualize performance trends and improvements over time
+- **Achievement System:** (Placeholder for future development)
+
+### 👥 Coach Experience
+- **Coach Dashboard:** Overview of all managed players with summarized data
+- **Player Management ("My Players"):** Add/remove players from your coaching roster
+- **Player-Specific Views:** Drill down into any player's full data (Training, Matches, Goals, Schedule)
+- **Management Modals:** Create and edit training sessions, matches, and goals on behalf of your players
+- **Role-Based Navigation:** Dedicated sidebar with coach-specific menu items (Player Management, Analytics)
+
+### 🛠️ Technical Features
+- **Real-Time Firebase Firestore Database:** Live data synchronization across all devices
+- **Advanced Firestore Security Rules:** Ensures users can only access their own data (or their players'/coach's data)
+- **Responsive UI:** Works seamlessly on desktop, tablet, and mobile devices
+- **Dynamic Role-Based UI:** Interface and navigation change based on user role
+- **Interactive Modals:** Unified modal system for all Create, Read, Update, Delete (CRUD) operations
+- **Toast Notifications:** User feedback for successful actions and errors
+- **Loading & Empty States:** Polished UX for all data-fetching scenarios
+
+## 🗂️ Project Structure
+ShuttleStats/
+│   .gitattributes
+│   .gitignore
+│   .vercelignore
+│   build.js
+│   README.md
+│
+├───.vercel
+│       project.json
+│       README.txt
+│
+├───public
+│   │   achievement.html
+│   │   coach-dashboard.html
+│   │   favicon.ico
+│   │   goals.html
+│   │   index.html
+│   │   login.html
+│   │   matches.html
+│   │   my-players.html
+│   │   player-dashboard.html
+│   │   progress.html
+│   │   schedule.html
+│   │   training.html
+│   │
+│   ├───assets
+│   │   └───icons
+│   │
+│   ├───config
+│   │       firebase-config.js
+│   │       firestore.rules
+│   │
+│   ├───css
+│   │       style.css
+│   │       user-greeting.css
+│   │
+│   └───js
+│           achievement.js
+│           app.js
+│           auth-utils.js
+│           coach-dashboard.js
+│           goals.js
+│           loading.js
+│           login.js
+│           matches.js
+│           modals.js
+│           my-players.js
+│           navigation.js
+│           player-dashboard.js
+│           progress.js
+│           role-manager.js
+│           schedule.js
+│           toast.js
+│           training.js
+│           user-greeting.js
+
+## 🛠️ Tech Stack
+
+- **Frontend:** Vanilla JavaScript (ES6+ Modules), HTML5, CSS3
+- **Backend:** Firebase Firestore (NoSQL Database)
+- **Authentication:** Firebase Authentication
+- **Hosting:** Vercel
+- **Architecture:** Multi-Page Application (MPA) with role-aware UI
+
+### Key Technical Implementation Details:
+- **Firebase Security Rules:** Custom rules enforce data isolation. Coaches can only manage their players' data; players can only access their own data.
+- **Coach-Player Relationship System:** coaches can send invitations; players can accept, linking their account to the coach.
+- **Real-time Listeners:** Live updates for all data types create a dynamic user experience.
+
+## 🚀 Getting Started
 
 ### Prerequisites
+- A modern web browser (Chrome, Firefox, Safari, Edge)
+- A Firebase project with Firestore and Authentication enabled
 
-- Git repository with your ShuttleStats code
-- Vercel account (free)
-- Firebase project with web configuration
+### Installation & Deployment
+1.  **Clone the repository**
+2.  **Set up Firebase:**
+    - Create a new Firebase project in the [Firebase Console](https://console.firebase.google.com/)
+    - Enable **Authentication** (Email/Password & Google providers)
+    - Enable **Firestore Database**
+    - Copy your config object into `Public/config/firebase-config.js`
+    - Deploy the Security Rules from `Public/config/firestore.rules`
+3.  **Deploy to Vercel:**
+    - Push your code to a GitHub repository
+    - Connect your repo to [Vercel](https://vercel.com/)
+    - Set the **Root Directory** to `Public`
+    - Deploy!
 
-### Step-by-Step Deployment
+## 📖 Usage
 
-1. **Push to GitHub/GitLab/Bitbucket**
+1.  **Visit the live site** or open `Public/login.html` locally.
+2.  **Create an account** as either a Player or a Coach.
+3.  **Players:** Start logging training sessions, matches, and goals.
+4.  **Coaches:** Go to "My Players" to add players via their email address. Once added, you can view and manage all their data.
+5.  **Explore** the different sections using the role-specific navigation sidebar.
 
-   ```bash
-   git add .
-   git commit -m "Ready for production deployment"
-   git push origin main
-   ```
+## 🔒 Security & Data Isolation
 
-2. **Deploy on Vercel**
+The application implements robust security rules ensuring:
+- Users can only read/write their own data in the `users` collection.
+- Coaches can only see and manage data for players in their roster.
+- Players can only see data associated with their own user ID.
+- All operations are validated against the authenticated user's UID.
 
-   - Visit [vercel.com](https://vercel.com)
-   - Click "New Project"
-   - Import your repository
-   - Vercel will automatically detect the configuration from `vercel.json`
-   - Click "Deploy"
+## 📄 License
 
-3. **Configure Environment Variables** (if needed)
-   - Go to Project Settings → Environment Variables
-   - Add any additional environment variables
+This project is open source and available under the [MIT License](LICENSE).
 
-### Manual Deployment (Alternative)
+## 👥 Contributing
 
-1. **Install Vercel CLI**
-
-   ```bash
-   npm install -g vercel
-   ```
-
-2. **Deploy**
-
-   ```bash
-   vercel
-   ```
-
-3. **Follow the prompts and your app will be live!**
-
-## 📁 Project Structure
-
-```
-shuttlestats/
-├── Public/                 # All web files (HTML, CSS, JS)
-│   ├── index.html         # Landing page
-│   ├── login.html         # Authentication
-│   ├── *-dashboard.html   # User dashboards
-│   ├── css/              # Stylesheets
-│   ├── js/               # JavaScript modules
-│   ├── assets/           # Images, icons
-│   └── config/           # Firebase configuration
-├── vercel.json           # Vercel deployment config
-├── package.json          # Project metadata
-├── build.js             # Optional build script
-└── .vercelignore        # Deployment exclusions
-```
-
-## 🔧 Configuration Files
-
-- **vercel.json**: Handles routing for the multi-page application
-- **package.json**: Project metadata and scripts
-- **build.js**: Optional build process for clean deployment
-
-## 🌐 Live URLs
-
-After deployment, your app will be available at:
-
-- Main site: `https://your-app-name.vercel.app`
-- Login: `https://your-app-name.vercel.app/login`
-- Player Dashboard: `https://your-app-name.vercel.app/player-dashboard`
-- Coach Dashboard: `https://your-app-name.vercel.app/coach-dashboard`
-
-## 🔥 Firebase Configuration
-
-Ensure your `Public/config/firebase-config.js` has the correct Firebase project configuration for production.
-
-## 📱 Features
-
-- **Role-based Access**: Separate interfaces for coaches and players
-- **Training Management**: Log sessions, set goals, track progress
-- **Match Tracking**: Record match results and statistics
-- **Scheduling**: Manage training schedules and reminders
-- **Player Management**: Coach-player relationships and invitations
-- **Performance Analytics**: Progress tracking and achievement system
-
-## 🛠️ Development
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## 📞 Support
-
-For support or questions, contact: support@shuttlestats.app
+This is a school project. Feel free to explore the codebase for learning purposes. Issues and pull requests are welcome for educational discussion.
