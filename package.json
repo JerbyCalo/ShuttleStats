@@ -1,31 +1,18 @@
 {
-  "name": "shuttlestats",
-  "version": "2.0.0",
-  "description": "ShuttleStats - Badminton Training & Performance Tracking",
-  "main": "Public/index.html",
-  "type": "module",
-  "scripts": {
-    "build": "node build.js",
-    "dev": "npx http-server Public -p 3000 -c-1",
-    "preview": "npx http-server Public -p 4173",
-    "lint": "echo 'No linting configured'",
-    "test": "echo 'No tests configured'"
-  },
-  "keywords": [
-    "badminton",
-    "training",
-    "performance",
-    "tracking",
-    "sports",
-    "coaching"
+  "version": 2,
+  "builds": [
+    {
+      "src": "Public/**/*",
+      "use": "@vercel/static"
+    }
   ],
-  "author": "ShuttleStats Team",
-  "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {
-    "http-server": "^14.1.1"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  }
+  "routes": [
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/.*",
+      "dest": "/404.html"
+    }
+  ]
 }
