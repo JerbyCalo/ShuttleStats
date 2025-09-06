@@ -31,12 +31,12 @@ import {
 
 // PRODUCTION config
 const firebaseConfig = {
-  apiKey: "AIzaSyDZ_68qJDn3memHM1b4-foEWf90x_RdXGU",
-  authDomain: "shuttlestats-prod-75e43.firebaseapp.com",
-  projectId: "shuttlestats-prod-75e43",
-  storageBucket: "shuttlestats-prod-75e43.firebasestorage.app",
-  messagingSenderId: "705451198901",
-  appId: "1:705451198901:web:d0c3d77b8db73f0f8e71fc",
+  apiKey: "AIzaSyB-sxV9R1gHmXPRcetDft9c7XGBfncwVlk",
+  authDomain: "shuttlestats-c07d0.firebaseapp.com",
+  projectId: "shuttlestats-c07d0",
+  storageBucket: "shuttlestats-c07d0.firebasestorage.app",
+  messagingSenderId: "455417621783",
+  appId: "1:455417621783:web:c2d1d6d3517951fd37db52"
 };
 
 // Initialize Firebase
