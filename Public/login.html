@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShuttleStats - Login</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="js/app.js"></script>
+    <style>
+      .auth-container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+      }
+
+      .auth-card {
+        background: white;
+        border-radius: 16px;
+        padding: 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        width: 100%;
+        max-width: 400px;
+      }
+
+      .auth-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .auth-header h1 {
+        color: #1211ca;
+        margin-bottom: 8px;
+        font-size: 2rem;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .auth-header h1:hover {
+        transform: scale(1.05);
+      }
+
+      /* Logo split colors */
+      .logo-shuttle {
+        color: #1211ca;
+      }
+
+      .app-logo-link {
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .logo-stats {
+        color: #f9b314;
+      }
+
+      .auth-header p {
+        color: #64748b;
+        margin: 0;
+      }
+
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+      }
+
+      .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .form-group label {
+        font-weight: 600;
+        color: #374151;
+      }
+
+      .form-group input {
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #1211ca;
+      }
+
+      .auth-btn {
+        padding: 12px 24px;
+        background: #1211ca;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background-color 0.2s;
+      }
+
+      .auth-btn:hover {
+        background: #0f0fb3;
+      }
+
+      .auth-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+      }
+
+      .google-btn {
+        background: white;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+      }
+
+      .google-btn:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+      }
+
+      .auth-divider {
+        display: flex;
+        align-items: center;
+        margin: 20px 0;
+      }
+
+      .auth-divider::before,
+      .auth-divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: #e5e7eb;
+      }
+
+      .auth-divider span {
+        padding: 0 16px;
+        color: #6b7280;
+        font-size: 14px;
+      }
+
+      .auth-switch {
+        text-align: center;
+        margin-top: 20px;
+        color: #6b7280;
+      }
+
+      .auth-switch a {
+        color: #1211ca;
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      .auth-switch a:hover {
+        text-decoration: underline;
+      }
+
+      .error-message {
+        background: #fef2f2;
+        color: #dc2626;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #fecaca;
+        font-size: 14px;
+      }
+
+      .success-message {
+        background: #f0fdf4;
+        color: #16a34a;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #bbf7d0;
+        font-size: 14px;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid #ffffff;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Role and Coach Selection Styles */
+      .role-selection {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .role-option {
+        flex: 1;
+        padding: 12px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+      }
+
+      .role-option:hover {
+        border-color: #1211ca;
+        background: #f8f9ff;
+      }
+
+      .role-option.selected {
+        border-color: #1211ca;
+        background: #1211ca;
+        color: white;
+      }
+
+      .coach-selection {
+        margin-top: 15px;
+      }
+
+      .coach-options {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .coach-option {
+        flex: 1;
+        padding: 8px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 6px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+        font-size: 14px;
+      }
+
+      .coach-option:hover {
+        border-color: #1211ca;
+        background: #f8f9ff;
+      }
+
+      .coach-option.selected {
+        border-color: #1211ca;
+        background: #1211ca;
+        color: white;
+      }
+
+      /* Enhanced Loading and Toast Styles */
+      .auth-btn {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .auth-btn.loading {
+        opacity: 0.7;
+        cursor: not-allowed;
+        pointer-events: none;
+      }
+
+      .auth-btn.loading .btn-text {
+        opacity: 0;
+      }
+
+      .auth-btn.loading::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 16px;
+        height: 16px;
+        border: 2px solid transparent;
+        border-top: 2px solid currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Form Validation */
+      .form-group input.error {
+        border-color: #ef4444;
+        background-color: #fef2f2;
+      }
+
+      .form-group input.success {
+        border-color: #10b981;
+        background-color: #f0fdf4;
+      }
+
+      .field-error {
+        color: #ef4444;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        display: none;
+      }
+
+      .field-error.show {
+        display: block;
+      }
+
+      /* Mobile Responsiveness */
+      @media (max-width: 768px) {
+        .auth-container {
+          padding: 10px;
+          min-height: 100vh;
+        }
+
+        .auth-card {
+          padding: 30px 20px;
+          margin: 10px;
+          border-radius: 12px;
+          max-width: none;
+          width: calc(100% - 20px);
+        }
+
+        .auth-header h1 {
+          font-size: 2rem;
+        }
+
+        .auth-header p {
+          font-size: 0.9rem;
+        }
+
+        .form-group {
+          margin-bottom: 18px;
+        }
+
+        .form-group input {
+          padding: 14px 16px;
+          font-size: 16px; /* Prevents zoom on iOS */
+        }
+
+        .auth-btn {
+          padding: 14px;
+          font-size: 16px;
+        }
+
+        .role-selection {
+          gap: 12px;
+        }
+
+        .role-option {
+          padding: 15px;
+        }
+
+        .role-option h3 {
+          font-size: 1rem;
+        }
+
+        .role-option p {
+          font-size: 0.8rem;
+        }
+
+        /* Toast notifications adjustment for mobile */
+        .toast-container {
+          padding: 10px;
+        }
+
+        .toast {
+          margin-bottom: 8px;
+          padding: 12px 16px;
+          font-size: 0.9rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .auth-card {
+          padding: 25px 15px;
+          margin: 5px;
+        }
+
+        .role-selection {
+          flex-direction: column;
+          gap: 10px;
+        }
+
+        .role-option {
+          width: 100%;
+        }
+      }
+
+      /* Password Security Features */
+      .password-input-container {
+        position: relative;
+      }
+
+      .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #6b7280;
+        font-size: 18px;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .password-toggle:hover {
+        color: #374151;
+      }
+
+      .password-strength-container {
+        margin-top: 8px;
+      }
+
+      .password-strength-bar {
+        width: 100%;
+        height: 4px;
+        background: #e5e7eb;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-bottom: 8px;
+      }
+
+      .password-strength-fill {
+        height: 100%;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+      }
+
+      .strength-weak {
+        width: 25%;
+        background: #ef4444;
+      }
+
+      .strength-fair {
+        width: 50%;
+        background: #f59e0b;
+      }
+
+      .strength-good {
+        width: 75%;
+        background: #3b82f6;
+      }
+
+      .strength-strong {
+        width: 100%;
+        background: #10b981;
+      }
+
+      .password-requirements {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+
+      .requirement {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+
+      .requirement-icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+      }
+
+      .requirement-met {
+        background: #10b981;
+        color: white;
+      }
+
+      .requirement-unmet {
+        background: #e5e7eb;
+        color: #9ca3af;
+      }
+
+      .strength-text {
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      .strength-weak-text {
+        color: #ef4444;
+      }
+      .strength-fair-text {
+        color: #f59e0b;
+      }
+      .strength-good-text {
+        color: #3b82f6;
+      }
+      .strength-strong-text {
+        color: #10b981;
+      }
+
+      /* Forgot Password Link */
+      .forgot-password {
+        text-align: center;
+        margin-top: 16px;
+      }
+
+      .forgot-password a {
+        color: #1211ca;
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .forgot-password a:hover {
+        text-decoration: underline;
+      }
+
+      /* Remember Me */
+      .remember-me {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 16px 0;
+        font-size: 0.875rem;
+        color: #374151;
+      }
+
+      .remember-me input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        accent-color: #1211ca;
+      }
+
+      /* Name Fields Layout */
+      .name-fields {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .name-field {
+        flex: 1;
+      }
+
+      .name-field.optional {
+        opacity: 0.8;
+      }
+
+      .name-field label {
+        display: block;
+        margin-bottom: 6px;
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.875rem;
+      }
+
+      .name-field input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: all 0.2s;
+        box-sizing: border-box;
+      }
+
+      .name-field input:focus {
+        outline: none;
+        border-color: #1211ca;
+        box-shadow: 0 0 0 3px rgba(18, 17, 202, 0.1);
+      }
+
+      @media (max-width: 480px) {
+        .name-fields {
+          flex-direction: column;
+          gap: 16px;
+        }
+      }
+
+      /* Form Toggle Styles */
+      .hidden {
+        display: none !important;
+      }
+
+      .optional-text {
+        color: #9ca3af;
+        font-size: 0.875rem;
+        font-weight: 400;
+      }
+
+      /* Radio Group Styles for Sign-up */
+      .radio-group {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 8px;
+      }
+
+      .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-weight: 500;
+      }
+
+      .radio-option:hover {
+        border-color: #1211ca;
+        background: #f8f9ff;
+      }
+
+      .radio-option input[type="radio"] {
+        margin: 0;
+        width: 18px;
+        height: 18px;
+        accent-color: #1211ca;
+      }
+
+      .radio-option:has(input[type="radio"]:checked) {
+        border-color: #1211ca;
+        background: #f0f0ff;
+      }
+
+      .radio-option:has(input[type="radio"]:checked) .radio-text {
+        color: #1211ca;
+        font-weight: 600;
+      }
+
+      /* Select dropdown styling */
+      select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 16px;
+        padding-right: 40px;
+      }
+
+      select:focus {
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231211ca' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+      }
+
+      /* Enhanced button disabled state */
+      .auth-btn:disabled {
+        background: #9ca3af !important;
+        cursor: not-allowed !important;
+        opacity: 0.6;
+      }
+
+      .auth-btn:disabled:hover {
+        background: #9ca3af !important;
+      }
+
+      /* Mobile adjustments for radio buttons */
+      @media (max-width: 768px) {
+        .radio-option {
+          padding: 14px 16px;
+          font-size: 0.9rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .radio-group {
+          gap: 10px;
+        }
+
+        .radio-option {
+          padding: 12px 14px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="auth-header">
+          <a href="index.html" class="app-logo-link">
+            <h1 id="logoHeader" class="app-logo">
+              🏸 <span class="logo-shuttle">Shuttle</span
+              ><span class="logo-stats">Stats</span>
+            </h1>
+          </a>
+          <p id="authSubtitle">Sign in to your account</p>
+        </div>
+
+        <div
+          id="errorMessage"
+          class="error-message"
+          style="display: none"
+        ></div>
+        <div
+          id="successMessage"
+          class="success-message"
+          style="display: none"
+        ></div>
+
+        <form id="loginForm" class="auth-form">
+          <!-- Full Name Fields (only for signup) -->
+          <div class="form-group" id="nameFieldsGroup" style="display: none">
+            <div class="name-fields">
+              <div class="name-field">
+                <label for="firstName">First Name</label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  placeholder="John"
+                  autocomplete="given-name"
+                />
+                <div class="field-error" id="firstNameError"></div>
+              </div>
+              <div class="name-field optional">
+                <label for="middleName"
+                  >Middle Name
+                  <span style="color: #9ca3af">(Optional)</span></label
+                >
+                <input
+                  type="text"
+                  id="middleName"
+                  name="middleName"
+                  placeholder="Michael"
+                  autocomplete="additional-name"
+                />
+              </div>
+              <div class="name-field">
+                <label for="surname">Surname</label>
+                <input
+                  type="text"
+                  id="surname"
+                  name="surname"
+                  placeholder="Doe"
+                  autocomplete="family-name"
+                />
+                <div class="field-error" id="surnameError"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" required />
+            <div class="field-error" id="emailError"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <div class="password-input-container">
+              <input type="password" id="password" name="password" required />
+              <button type="button" class="password-toggle" id="passwordToggle">
+                👁️
+              </button>
+            </div>
+            <div
+              class="password-strength-container"
+              id="passwordStrengthContainer"
+              style="display: none"
+            >
+              <div class="strength-text" id="strengthText"></div>
+              <div class="password-strength-bar">
+                <div class="password-strength-fill" id="strengthFill"></div>
+              </div>
+              <div class="password-requirements" id="passwordRequirements">
+                <div class="requirement" id="lengthReq">
+                  <span class="requirement-icon requirement-unmet">✓</span>
+                  <span>At least 6 characters</span>
+                </div>
+                <div class="requirement" id="uppercaseReq">
+                  <span class="requirement-icon requirement-unmet">✓</span>
+                  <span>One uppercase letter</span>
+                </div>
+                <div class="requirement" id="numberReq">
+                  <span class="requirement-icon requirement-unmet">✓</span>
+                  <span>One number</span>
+                </div>
+              </div>
+            </div>
+            <div class="field-error" id="passwordError"></div>
+          </div>
+
+          <div
+            class="form-group"
+            id="confirmPasswordGroup"
+            style="display: none"
+          >
+            <label for="confirmPassword">Confirm Password</label>
+            <div class="password-input-container">
+              <input
+                type="password"
+                id="confirmPassword"
+                name="confirmPassword"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                id="confirmPasswordToggle"
+              >
+                👁️
+              </button>
+            </div>
+            <div class="field-error" id="confirmPasswordError"></div>
+          </div>
+
+          <!-- Role Selection for Signup -->
+          <div class="form-group" id="roleSelectionGroup" style="display: none">
+            <label>I am a:</label>
+            <div class="role-selection">
+              <div class="role-option" id="playerOption" data-role="player">
+                🏸 Player
+              </div>
+              <div class="role-option" id="coachOption" data-role="coach">
+                👨‍🏫 Coach
+              </div>
+            </div>
+          </div>
+
+          <!-- Coach Selection for Players -->
+          <div
+            class="form-group"
+            id="coachSelectionGroup"
+            style="display: none"
+          >
+            <label>Do you have a coach?</label>
+            <div class="coach-options">
+              <div class="coach-option" id="hasCoachOption" data-coach="yes">
+                Yes, I have a coach
+              </div>
+              <div class="coach-option" id="soloOption" data-coach="no">
+                I train solo
+              </div>
+            </div>
+            <div id="coachNameGroup" style="display: none; margin-top: 15px">
+              <label for="coachName">Coach Name</label>
+              <input
+                type="text"
+                id="coachName"
+                name="coachName"
+                placeholder="Enter your coach's name"
+              />
+              <div class="field-error" id="coachNameError"></div>
+            </div>
+          </div>
+
+          <!-- Remember Me (only for sign in) -->
+          <div class="remember-me" id="rememberMeGroup">
+            <input type="checkbox" id="rememberMe" name="rememberMe" />
+            <label for="rememberMe">Remember me</label>
+          </div>
+
+          <button type="submit" id="authSubmitBtn" class="auth-btn">
+            <span id="authBtnText" class="btn-text">Sign In</span>
+            <span
+              id="authBtnLoading"
+              class="loading-spinner"
+              style="display: none"
+            ></span>
+          </button>
+
+          <!-- Forgot Password (only for sign in) -->
+          <div class="forgot-password" id="forgotPasswordGroup">
+            <a href="#" id="forgotPasswordLink">Forgot your password?</a>
+          </div>
+
+          <div class="auth-divider">
+            <span>or</span>
+          </div>
+
+          <button
+            type="button"
+            id="googleSignInBtn"
+            class="auth-btn google-btn"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path
+                fill="#4285F4"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="#34A853"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="#FBBC05"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="#EA4335"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
+            </svg>
+            Continue with Google
+          </button>
+        </form>
+
+        <!-- Sign Up Form (Hidden by default) -->
+        <form id="signupForm" class="auth-form hidden">
+          <!-- Name Fields -->
+          <div class="form-group">
+            <div class="name-fields">
+              <div class="name-field">
+                <label for="signup-firstName">First Name</label>
+                <input
+                  type="text"
+                  id="signup-firstName"
+                  name="firstName"
+                  placeholder="John"
+                  required
+                />
+                <div class="field-error" id="signup-firstNameError"></div>
+              </div>
+              <div class="name-field optional">
+                <label for="signup-middleName"
+                  >Middle Name
+                  <span class="optional-text">(Optional)</span></label
+                >
+                <input
+                  type="text"
+                  id="signup-middleName"
+                  name="middleName"
+                  placeholder="Michael"
+                />
+              </div>
+              <div class="name-field">
+                <label for="signup-lastName">Last Name</label>
+                <input
+                  type="text"
+                  id="signup-lastName"
+                  name="lastName"
+                  placeholder="Doe"
+                  required
+                />
+                <div class="field-error" id="signup-lastNameError"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Email Field -->
+          <div class="form-group">
+            <label for="signup-email">Email Address</label>
+            <input
+              type="email"
+              id="signup-email"
+              name="email"
+              placeholder="john.doe@example.com"
+              required
+            />
+            <div class="field-error" id="signup-emailError"></div>
+          </div>
+
+          <!-- Password Field -->
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <div class="password-input-container">
+              <input
+                type="password"
+                id="signup-password"
+                name="password"
+                placeholder="Enter a strong password"
+                required
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                id="signup-passwordToggle"
+              >
+                👁️
+              </button>
+            </div>
+            <div
+              class="password-strength-container"
+              id="signup-passwordStrengthContainer"
+              style="display: none"
+            >
+              <div class="strength-text" id="signup-strengthText"></div>
+              <div class="password-strength-bar">
+                <div
+                  class="password-strength-fill"
+                  id="signup-strengthFill"
+                ></div>
+              </div>
+              <div class="password-requirements">
+                <div class="requirement" id="signup-lengthReq">
+                  <span class="requirement-icon requirement-unmet">✓</span>
+                  <span>At least 6 characters</span>
+                </div>
+                <div class="requirement" id="signup-uppercaseReq">
+                  <span class="requirement-icon requirement-unmet">✓</span>
+                  <span>One uppercase letter</span>
+                </div>
+                <div class="requirement" id="signup-numberReq">
+                  <span class="requirement-icon requirement-unmet">✓</span>
+                  <span>One number</span>
+                </div>
+              </div>
+            </div>
+            <div class="field-error" id="signup-passwordError"></div>
+          </div>
+
+          <!-- Confirm Password Field -->
+          <div class="form-group">
+            <label for="signup-confirmPassword">Confirm Password</label>
+            <div class="password-input-container">
+              <input
+                type="password"
+                id="signup-confirmPassword"
+                name="confirmPassword"
+                placeholder="Re-enter your password"
+                required
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                id="signup-confirmPasswordToggle"
+              >
+                👁️
+              </button>
+            </div>
+            <div class="field-error" id="signup-confirmPasswordError"></div>
+          </div>
+
+          <!-- Role Selection -->
+          <div class="form-group">
+            <label for="signup-role">I am a:</label>
+            <select id="signup-role" name="role" required>
+              <option value="">Select your role</option>
+              <option value="player">Player</option>
+              <option value="coach">Coach</option>
+            </select>
+            <div class="field-error" id="signup-roleError"></div>
+          </div>
+
+          <!-- Coach Selection for Players (Dynamic) -->
+          <div
+            class="form-group"
+            id="signup-coachSelectionGroup"
+            style="display: none"
+          >
+            <label>Do you have a coach?</label>
+            <div class="radio-group">
+              <label class="radio-option">
+                <input
+                  type="radio"
+                  name="hasCoach"
+                  value="yes"
+                  id="signup-hasCoach"
+                />
+                <span class="radio-text">Yes, I have a coach</span>
+              </label>
+              <label class="radio-option">
+                <input
+                  type="radio"
+                  name="hasCoach"
+                  value="no"
+                  id="signup-noCoach"
+                />
+                <span class="radio-text">I train solo</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Coach Email Field (Dynamic) -->
+          <div
+            class="form-group"
+            id="signup-coachEmailGroup"
+            style="display: none"
+          >
+            <label for="signup-coachEmail">Coach's Email Address</label>
+            <input
+              type="email"
+              id="signup-coachEmail"
+              name="coachEmail"
+              placeholder="coach@example.com"
+            />
+            <div class="field-error" id="signup-coachEmailError"></div>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" id="signup-submit" class="auth-btn" disabled>
+            <span class="btn-text">Create Account</span>
+          </button>
+        </form>
+
+        <!-- Dynamic Auth Switch - appears after both forms -->
+        <div class="auth-switch">
+          <span id="authSwitchText">Don't have an account?</span>
+          <a href="#" id="authSwitchLink">Sign up</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Firebase SDK v10 (Modular) -->
+    <script type="module" src="./config/firebase-config.js"></script>
+
+    <!-- Application Scripts -->
+    <script src="./js/toast.js"></script>
+    <script type="module" src="./js/modals.js" defer></script>
+    <script type="module" src="./js/login.js"></script>
+  </body>
+</html>

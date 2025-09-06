@@ -1,0 +1,128 @@
+{
+  "version": 2,
+  "public": true,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  },
+  "functions": {
+    "Public/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "routes": [
+    {
+      "src": "/",
+      "dest": "/Public/index.html"
+    },
+    {
+      "src": "/login",
+      "dest": "/Public/login.html"
+    },
+    {
+      "src": "/player-dashboard",
+      "dest": "/Public/player-dashboard.html"
+    },
+    {
+      "src": "/coach-dashboard",
+      "dest": "/Public/coach-dashboard.html"
+    },
+    {
+      "src": "/training",
+      "dest": "/Public/training.html"
+    },
+    {
+      "src": "/matches",
+      "dest": "/Public/matches.html"
+    },
+    {
+      "src": "/schedule",
+      "dest": "/Public/schedule.html"
+    },
+    {
+      "src": "/my-players",
+      "dest": "/Public/my-players.html"
+    },
+    {
+      "src": "/progress",
+      "dest": "/Public/progress.html"
+    },
+    {
+      "src": "/goals",
+      "dest": "/Public/goals.html"
+    },
+    {
+      "src": "/achievement",
+      "dest": "/Public/achievement.html"
+    },
+    {
+      "src": "/Public/(.*)",
+      "dest": "/Public/$1"
+    },
+    {
+      "src": "/css/(.*)",
+      "dest": "/Public/css/$1"
+    },
+    {
+      "src": "/js/(.*)",
+      "dest": "/Public/js/$1"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/Public/assets/$1"
+    },
+    {
+      "src": "/config/(.*)",
+      "dest": "/Public/config/$1"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    },
+    {
+      "source": "/js/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/css/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/assets/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ]
+}

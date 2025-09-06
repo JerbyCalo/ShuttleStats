@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShuttleStats - Badminton Training & Performance Tracking</title>
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="navbar">
+      <div class="nav-container">
+        <div class="nav-logo" tabindex="0">
+          <span class="logo-icon">🏸</span>
+          <span class="logo-text"
+            ><span class="logo-shuttle">Shuttle</span
+            ><span class="logo-stats">Stats</span></span
+          >
+        </div>
+        <!-- Mobile menu toggle -->
+        <button
+          class="nav-toggle"
+          aria-controls="primaryNav"
+          aria-expanded="false"
+          aria-label="Toggle menu"
+        >
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+
+        <ul id="primaryNav" class="nav-menu">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#about">About</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="login.html" class="nav-cta">Login</a></li>
+        </ul>
+      </div>
+    </nav>
+    <!-- Overlay for mobile menu -->
+    <div class="nav-overlay" hidden></div>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <h1 class="hero-title">Elevate Your Badminton Training</h1>
+        <p class="hero-subtitle">
+          Make training and performance tracking more organized, efficient, and
+          data-driven for the badminton community.
+        </p>
+        <div class="hero-buttons">
+          <a href="#features" class="btn btn-primary">Explore Features</a>
+          <a href="login.html" class="btn btn-secondary">Get Started</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="shuttlecock">🏸</div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+      <div class="container">
+        <h2>Key Features</h2>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon circle">
+              <img
+                src="assets/icons/user-dashboard.svg"
+                alt="User Accounts & Dashboards"
+              />
+            </div>
+            <h3>User Accounts & Dashboards</h3>
+            <p>Separate views for coaches and players.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon circle">
+              <img
+                src="assets/icons/training-match.svg"
+                alt="Training & Match Tracking"
+              />
+            </div>
+            <h3>Training & Match Tracking</h3>
+            <p>Log sessions, matches, and progress.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon circle">
+              <img
+                src="assets/icons/schedule.svg"
+                alt="Scheduling & Reminders"
+              />
+            </div>
+            <h3>Scheduling & Reminders</h3>
+            <p>Manage training schedules with notifications.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon circle">
+              <img src="assets/icons/reports.svg" alt="Performance Reports" />
+            </div>
+            <h3>Performance Reports</h3>
+            <p>Generate and share progress summaries.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon circle">
+              <img src="assets/icons/feedback.svg" alt="Feedback System" />
+            </div>
+            <h3>Feedback System</h3>
+            <p>Coaches give structured feedback to players.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+      <div class="container">
+        <h2>About ShuttleStats</h2>
+        <p>
+          ShuttleStats is a web-based system built for the badminton community,
+          designed to help coaches and players track training, monitor
+          performance, and manage schedules in one platform. Instead of relying
+          on notebooks or verbal feedback, the system provides role-based
+          dashboards, structured tracking, and data-driven reports that improve
+          communication and support player development.
+        </p>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+      <div class="container">
+        <h2>Contact</h2>
+        <p>
+          Have feedback or questions? Reach us at
+          <a href="mailto:support@shuttlestats.app">support@shuttlestats.app</a
+          >.
+        </p>
+      </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+      <div class="container">
+        <h2>Ready to Transform Your Badminton Training?</h2>
+        <p>
+          Join thousands of players and coaches who are already using
+          ShuttleStats to improve their game.
+        </p>
+        <a href="login.html" class="btn btn-primary btn-large"
+          >Get Started Today</a
+        >
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h4>ShuttleStats</h4>
+            <p>Making badminton training more organized and data-driven.</p>
+          </div>
+          <div class="footer-section">
+            <h4>Quick Links</h4>
+            <ul>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#about">About</a></li>
+              <li><a href="#contact">Contact</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Support</h4>
+            <ul>
+              <li><a href="#">Help Center</a></li>
+              <li><a href="#">Contact Support</a></li>
+              <li><a href="#">Privacy Policy</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2025 ShuttleStats. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Firebase SDK v10 (Modular) -->
+    <script type="module" src="./config/firebase-config.js"></script>
+  </body>
+</html>

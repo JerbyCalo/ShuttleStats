@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Coach Dashboard - ShuttleStats</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/user-greeting.css" />
+    <script src="js/role-manager.js"></script>
+    <style>
+      /* Use exact colors from landing page */
+      :root {
+        --primary: #1211ca;
+        --secondary: #f9b314;
+        --bg: #f8f9fb;
+        --card: #ffffff;
+        --text: #333;
+        --muted: #666;
+        --border: #e1e5e9;
+        --sidebar-bg: #2d3748;
+        --sidebar-text: #e2e8f0;
+        --sidebar-hover: #4a5568;
+        --sidebar-active: #1211ca;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: radial-gradient(
+            1000px 600px at 10% -10%,
+            rgba(18, 17, 202, 0.06),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 540px at 95% 110%,
+            rgba(249, 179, 20, 0.08),
+            transparent 60%
+          );
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .layout {
+        min-height: 100vh;
+        position: relative;
+      }
+
+      /* Hamburger Menu Button - centered on left edge */
+      .hamburger-btn {
+        position: fixed;
+        top: 50%;
+        left: 20px;
+        transform: translateY(-50%);
+        z-index: 1003;
+        background: var(--card);
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: var(--primary);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .hamburger-btn.sidebar-open {
+        left: 280px;
+      }
+
+      .hamburger-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-50%) scale(1.05);
+      }
+
+      /* Sidebar - now off-canvas */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 260px;
+        height: 100vh;
+        background: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        display: flex;
+        flex-direction: column;
+        padding: 24px 16px;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+        transition: left 0.3s ease;
+        z-index: 1002;
+        overflow-y: auto;
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1001;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .sidebar-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: none;
+        border: none;
+        color: var(--sidebar-text);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: background 0.3s ease;
+      }
+
+      .sidebar-close:hover {
+        background: var(--sidebar-hover);
+      }
+
+      .sidebar .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin-bottom: 24px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar .brand:hover {
+        transform: scale(1.05);
+      }
+
+      .logo-shuttle {
+        color: var(--primary);
+      }
+      .logo-stats {
+        color: var(--secondary);
+      }
+
+      .sidebar-nav {
+        margin-top: 8px;
+      }
+      .nav-group {
+        margin: 18px 0;
+      }
+      .nav-label {
+        font-size: 0.75rem;
+        color: var(--secondary);
+        letter-spacing: 0.06em;
+        padding: 0 12px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+
+      .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 12px 16px;
+        margin: 4px 0;
+        border-radius: 8px;
+        color: var(--sidebar-text);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+
+      .nav-link:hover {
+        background: var(--sidebar-hover);
+        color: white;
+        transform: translateX(4px);
+      }
+
+      .nav-link.active {
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(18, 17, 202, 0.3);
+      }
+
+      .sidebar-footer {
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 1px solid var(--sidebar-hover);
+      }
+
+      .profile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: var(--sidebar-hover);
+        margin-bottom: 12px;
+        transition: background 0.3s ease;
+      }
+
+      .profile:hover {
+        background: #718096;
+      }
+
+      .profile .icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: white;
+      }
+
+      .signout-btn {
+        width: 100%;
+        padding: 12px 16px;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--secondary) 100%
+        );
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .signout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(18, 17, 202, 0.4);
+      }
+
+      /* Main content */
+      .main {
+        width: 100%;
+        padding: 24px;
+        padding-top: 0;
+        min-height: 100vh;
+      }
+
+      /* App Header with Logo and User Profile */
+      .app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        border: none;
+        border-bottom: 1px solid #eaeaea;
+        padding: 20px 32px;
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+        font-size: 2.2rem;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .app-logo:hover {
+        transform: scale(1.02);
+      }
+
+      .app-logo .logo-shuttle {
+        color: var(--primary);
+        font-weight: 900;
+      }
+
+      .app-logo .logo-stats {
+        color: var(--secondary);
+        font-weight: 900;
+      }
+
+      /* User Profile in Header */
+      .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: transparent;
+        border: 2px solid var(--border);
+        border-radius: 30px;
+        padding: 10px 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+      }
+
+      .user-profile:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(18, 17, 202, 0.25);
+      }
+
+      .user-profile .user-name {
+        font-weight: 600;
+        color: var(--text);
+        transition: color 0.3s ease;
+        font-size: 1rem;
+      }
+
+      .user-profile:hover .user-name {
+        color: white;
+      }
+
+      .user-profile .user-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: white;
+        transition: background 0.3s ease;
+      }
+
+      .user-profile:hover .user-icon {
+        background: white;
+        color: var(--primary);
+      }
+
+      /* COACH DASHBOARD SPECIFIC STYLES */
+
+      /* Main Content Grid Layout */
+      .main {
+        width: 100%;
+        padding: 24px;
+        padding-top: 0;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      /* Dashboard Header */
+      .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 32px;
+        margin-top: 24px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      .header-content h1 {
+        margin: 0 0 8px 0;
+        font-size: 2.5rem;
+        color: var(--primary);
+        font-weight: 700;
+        line-height: 1.2;
+      }
+
+      .header-content .subheading {
+        margin: 0;
+        color: var(--muted);
+        font-size: 1.15rem;
+        font-weight: 500;
+      }
+
+      /* Enhanced Player Selector */
+      .player-selector-container {
+        min-width: 300px;
+        text-align: left;
+      }
+
+      .player-selector-container label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text);
+        font-size: 1rem;
+      }
+
+      .enhanced-selector {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background-color: var(--bg);
+        font-size: 1rem;
+        color: var(--text);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+        background-position: right 0.5rem center;
+        background-repeat: no-repeat;
+        background-size: 1.5em 1.5em;
+        padding-right: 2.5rem;
+        appearance: none;
+      }
+
+      .enhanced-selector:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(18, 17, 202, 0.1);
+        background-color: white;
+      }
+
+      .enhanced-selector:hover {
+        border-color: var(--primary);
+        background-color: white;
+      }
+
+      /* KPI Cards Grid */
+      .kpi-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+      }
+
+      .kpi-card {
+        background: linear-gradient(135deg, var(--card) 0%, #f8fafc 100%);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+      }
+
+      .kpi-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      }
+
+      .kpi-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      .kpi-header h3 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .kpi-icon {
+        font-size: 1.5rem;
+        opacity: 0.8;
+      }
+
+      .kpi-value {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1;
+        margin-bottom: 4px;
+      }
+
+      .kpi-label {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-bottom: 12px;
+      }
+
+      .kpi-secondary {
+        font-size: 0.85rem;
+        color: var(--muted);
+        font-style: italic;
+      }
+
+      .kpi-progress {
+        margin-top: 12px;
+      }
+
+      .kpi-progress-bar {
+        width: 100%;
+        height: 8px;
+        background: var(--border);
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .kpi-progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        transition: width 0.6s ease;
+        border-radius: 4px;
+      }
+
+      /* Dashboard Sections */
+      .dashboard-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .dashboard-section {
+        background: var(--card);
+        padding: 24px;
+        border-radius: 16px;
+        border: 1px solid var(--border);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+      }
+
+      .dashboard-section:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+      }
+
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid var(--border);
+      }
+
+      .section-header h3 {
+        margin: 0;
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      .view-all-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        padding: 6px 12px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+      }
+
+      .view-all-link:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: translateX(2px);
+      }
+
+      .section-content {
+        min-height: 120px;
+      }
+
+      /* Enhanced Item Styling */
+      .training-item,
+      .match-item,
+      .goal-item {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 16px;
+        transition: all 0.3s ease;
+        position: relative;
+      }
+
+      .training-item:hover,
+      .match-item:hover,
+      .goal-item:hover {
+        border-color: var(--primary);
+        transform: translateX(4px);
+        box-shadow: 0 4px 12px rgba(18, 17, 202, 0.1);
+      }
+
+      .training-item:last-child,
+      .match-item:last-child,
+      .goal-item:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Enhanced Empty State */
+      .no-data {
+        color: var(--muted);
+        font-style: italic;
+        text-align: center;
+        margin: 60px 0;
+        font-size: 1.1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .no-data::before {
+        content: "📊";
+        font-size: 3rem;
+        opacity: 0.5;
+      }
+
+      /* Loading State */
+      .loading-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        color: var(--muted);
+        font-style: italic;
+        margin: 60px 0;
+      }
+
+      .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 2px solid var(--border);
+        border-top: 2px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Status Badges */
+      .status-badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
+
+      .status-win {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+      .status-loss {
+        background: #fef2f2;
+        color: #dc2626;
+      }
+      .status-in-progress {
+        background: #dbeafe;
+        color: #2563eb;
+      }
+      .status-completed {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+      .status-just-started {
+        background: #fef3c7;
+        color: #d97706;
+      }
+      .status-nearly-complete {
+        background: #dcfce7;
+        color: #16a34a;
+      }
+
+      /* Item Headers and Details */
+      .item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+      }
+
+      .item-title {
+        font-weight: 600;
+        color: var(--text);
+        margin: 0;
+      }
+
+      .item-date {
+        color: var(--muted);
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .item-details {
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.4;
+      }
+
+      .goal-progress {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .progress-bar {
+        flex: 1;
+        height: 6px;
+        background: var(--border);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        transition: width 0.3s ease;
+      }
+
+      .progress-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--primary);
+      }
+
+      /* Responsive Design */
+      @media (max-width: 1024px) {
+        .dashboard-header {
+          flex-direction: column;
+          gap: 24px;
+          align-items: stretch;
+        }
+
+        .player-selector-container {
+          min-width: auto;
+        }
+
+        .kpi-cards-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .hamburger-btn {
+          top: 20px;
+          left: 16px;
+          transform: none;
+          padding: 10px;
+          font-size: 1rem;
+        }
+
+        .hamburger-btn.sidebar-open {
+          left: 240px;
+        }
+
+        .main {
+          padding: 16px;
+          gap: 16px;
+        }
+
+        .app-header {
+          flex-direction: column;
+          gap: 20px;
+          align-items: center;
+          text-align: center;
+          padding: 24px 20px;
+          position: static;
+        }
+
+        .app-logo {
+          font-size: 1.8rem;
+        }
+
+        .dashboard-header {
+          padding: 24px;
+          margin-top: 16px;
+        }
+
+        .header-content h1 {
+          font-size: 2rem;
+        }
+
+        .dashboard-section {
+          padding: 20px;
+        }
+
+        .section-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .kpi-value {
+          font-size: 2rem;
+        }
+      }
+    </style>
+
+    <!-- Firebase SDK v10 (Modular) -->
+    <script type="module" src="./config/firebase-config.js"></script>
+
+    <!-- Application Scripts -->
+    <script src="./js/app.js"></script>
+    <script src="./js/user-greeting.js"></script>
+    <script src="./js/toast.js"></script>
+    <script src="./js/loading.js"></script>
+    <script src="./js/navigation.js" defer></script>
+    <script type="module" src="./js/coach-dashboard.js"></script>
+  </head>
+  <body>
+    <!-- Hamburger Menu Button -->
+    <button
+      class="hamburger-btn"
+      id="hamburgerBtn"
+      aria-label="Open navigation menu"
+    >
+      ☰
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="layout">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
+        <button
+          class="sidebar-close"
+          id="sidebarClose"
+          aria-label="Close navigation"
+        >
+          &times;
+        </button>
+        <div class="brand" id="sidebar-logo">
+          🏸 <span class="logo-shuttle">Shuttle</span
+          ><span class="logo-stats">Stats</span>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-group">
+            <div class="nav-label">Overview</div>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a
+                  id="navCoachDashboard"
+                  class="nav-link active"
+                  href="coach-dashboard.html"
+                  >Coach Dashboard</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="schedule.html">Schedule</a>
+              </li>
+            </ul>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label">Player Management</div>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a class="nav-link" href="my-players.html">
+                  <!-- <span>👥</span>-->
+                  My Players
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="training.html">Training</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="matches.html">Matches</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="goals.html">Goals</a>
+              </li>
+            </ul>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label">Analytics</div>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a class="nav-link" href="progress.html">Progress</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="achievement.html">Achievements</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="signout-btn" id="signout-btn">Sign Out</button>
+        </div>
+      </aside>
+
+      <!-- App Header with Logo and User Profile -->
+      <header class="app-header">
+        <a href="javascript:void(0)" id="main-logo-link" class="app-logo">
+          🏸 <span class="logo-shuttle">Shuttle</span
+          ><span class="logo-stats">Stats</span>
+        </a>
+        <div class="user-profile" id="userProfile" title="Profile & Settings">
+          <span class="user-name">Coach</span>
+          <span class="user-icon">⚙️</span>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main" id="mainContent">
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+          <div class="header-content">
+            <h1>Coach Dashboard</h1>
+            <p class="subheading">
+              Manage your players and track their progress
+            </p>
+          </div>
+          <div class="player-selector-container">
+            <label for="playerSelector">Select a Player:</label>
+            <select id="playerSelector" class="enhanced-selector">
+              <option value="">-- Choose a player --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- KPI Cards Row -->
+        <div class="kpi-cards-grid">
+          <div id="training-commitment-card" class="kpi-card">
+            <div class="kpi-header">
+              <h3>Training Commitment</h3>
+              <div class="kpi-icon">📊</div>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-value">--</div>
+              <div class="kpi-label">Sessions Completed</div>
+              <div class="kpi-progress">
+                <div class="kpi-progress-bar">
+                  <div class="kpi-progress-fill" style="width: 0%"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="current-focus-card" class="kpi-card">
+            <div class="kpi-header">
+              <h3>Current Focus</h3>
+              <div class="kpi-icon">🎯</div>
+            </div>
+            <div class="kpi-content">
+              <div class="kpi-value">--</div>
+              <div class="kpi-label">Primary Goal Category</div>
+              <div class="kpi-secondary">No goals set</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Sections -->
+        <div class="dashboard-sections">
+          <div id="recent-training-container" class="dashboard-section">
+            <div class="section-header">
+              <h3>Recent Training</h3>
+              <a href="training.html" class="view-all-link">View All →</a>
+            </div>
+            <div class="section-content">
+              <p class="no-data">Select a player to view training data</p>
+            </div>
+          </div>
+
+          <div id="upcoming-matches-container" class="dashboard-section">
+            <div class="section-header">
+              <h3>Recent Matches</h3>
+              <a href="matches.html" class="view-all-link">View All →</a>
+            </div>
+            <div class="section-content">
+              <p class="no-data">Select a player to view matches</p>
+            </div>
+          </div>
+
+          <div id="current-goals-container" class="dashboard-section">
+            <div class="section-header">
+              <h3>Current Goals</h3>
+              <a href="goals.html" class="view-all-link">View All →</a>
+            </div>
+            <div class="section-content">
+              <p class="no-data">Select a player to view goals</p>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
+</html>

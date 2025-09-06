@@ -1,0 +1,85 @@
+/* ShuttleStats v2 - Enhanced User Greeting Styles */
+
+/* Enhanced styling for personalized user greeting in header */
+.user-profile .user-name {
+  font-weight: 600;
+  color: var(--text);
+  transition: color 0.3s ease;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.user-profile:hover .user-name {
+  color: white;
+}
+
+/* Structured greeting components */
+.user-profile .user-name .name {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.user-profile .user-name .role {
+  font-weight: 400;
+  opacity: 0.8;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+
+.user-profile:hover .user-name .name,
+.user-profile:hover .user-name .role {
+  color: white;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .user-profile .user-name {
+    font-size: 0.9rem;
+    flex-direction: column;
+    gap: 2px;
+    text-align: center;
+  }
+
+  .user-profile .user-name .role {
+    font-size: 0.8em;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-profile .user-name {
+    font-size: 0.85rem;
+  }
+
+  .user-profile .user-name .role {
+    display: none; /* Hide role on very small screens to save space */
+  }
+}
+
+/* Loading state for user greeting */
+.user-profile .user-name.loading {
+  opacity: 0.6;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Error state for user greeting */
+.user-profile .user-name.error {
+  color: #ef4444;
+  font-style: italic;
+}
+
+.user-profile:hover .user-name.error {
+  color: #fca5a5;
+}

@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Players - ShuttleStats</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/user-greeting.css" />
+    <script src="js/role-manager.js"></script>
+    <style>
+      /* Use exact colors from landing page */
+      :root {
+        --primary: #1211ca;
+        --secondary: #f9b314;
+        --bg: #f8f9fb;
+        --card: #ffffff;
+        --text: #333;
+        --muted: #666;
+        --border: #e1e5e9;
+        --sidebar-bg: #2d3748;
+        --sidebar-text: #e2e8f0;
+        --sidebar-hover: #4a5568;
+        --sidebar-active: #1211ca;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: radial-gradient(
+            1000px 600px at 10% -10%,
+            rgba(18, 17, 202, 0.06),
+            transparent 60%
+          ),
+          radial-gradient(
+            900px 540px at 95% 110%,
+            rgba(249, 179, 20, 0.08),
+            transparent 60%
+          );
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      .layout {
+        min-height: 100vh;
+        position: relative;
+      }
+
+      /* Hamburger Menu Button - centered on left edge */
+      .hamburger-btn {
+        position: fixed;
+        top: 50%;
+        left: 20px;
+        transform: translateY(-50%);
+        z-index: 1003;
+        background: var(--card);
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        padding: 12px;
+        cursor: pointer;
+        font-size: 1.2rem;
+        color: var(--primary);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .hamburger-btn.sidebar-open {
+        left: 280px;
+      }
+
+      .hamburger-btn:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-50%) scale(1.05);
+      }
+
+      /* Sidebar - now off-canvas */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 260px;
+        height: 100vh;
+        background: var(--sidebar-bg);
+        color: var(--sidebar-text);
+        display: flex;
+        flex-direction: column;
+        padding: 24px 16px;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+        transition: left 0.3s ease;
+        z-index: 1002;
+        overflow-y: auto;
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .sidebar-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1001;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .sidebar-overlay.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .sidebar-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: none;
+        border: none;
+        color: var(--sidebar-text);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 4px;
+        transition: background 0.3s ease;
+      }
+
+      .sidebar-close:hover {
+        background: var(--sidebar-hover);
+      }
+
+      .sidebar .brand {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin-bottom: 24px;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+
+      .sidebar .brand:hover {
+        transform: scale(1.05);
+      }
+
+      .logo-shuttle {
+        color: var(--primary);
+      }
+      .logo-stats {
+        color: var(--secondary);
+      }
+
+      .sidebar-nav {
+        margin-top: 8px;
+      }
+
+      .nav-group {
+        margin: 18px 0;
+      }
+
+      .nav-label {
+        font-size: 0.75rem;
+        color: var(--secondary);
+        letter-spacing: 0.06em;
+        padding: 0 12px;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+
+      .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .nav-item {
+        margin-bottom: 4px;
+      }
+
+      .nav-link {
+        display: block;
+        padding: 12px 16px;
+        margin: 4px 0;
+        border-radius: 8px;
+        color: var(--sidebar-text);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-weight: 500;
+      }
+
+      .nav-link:hover {
+        background: var(--sidebar-hover);
+        color: white;
+        transform: translateX(4px);
+      }
+
+      .nav-link.active {
+        background: var(--primary);
+        color: white;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(18, 17, 202, 0.3);
+      }
+
+      .sidebar-footer {
+        margin-top: auto;
+        padding-top: 16px;
+        border-top: 1px solid var(--sidebar-hover);
+      }
+
+      .profile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-radius: 8px;
+        background: var(--sidebar-hover);
+        margin-bottom: 12px;
+        transition: background 0.3s ease;
+      }
+
+      .profile:hover {
+        background: #718096;
+      }
+
+      .profile .icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: white;
+      }
+
+      .signout-btn {
+        width: 100%;
+        padding: 12px 16px;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--secondary) 100%
+        );
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .signout-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(18, 17, 202, 0.4);
+      }
+
+      /* App Header with Logo and User Profile */
+      .app-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        border: none;
+        border-bottom: 1px solid #eaeaea;
+        padding: 20px 32px;
+        margin: 0;
+        width: 100%;
+        box-sizing: border-box;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+
+      .app-logo {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 800;
+        font-size: 2.2rem;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .app-logo:hover {
+        transform: scale(1.02);
+      }
+
+      .app-logo .logo-shuttle {
+        color: var(--primary);
+        font-weight: 900;
+      }
+
+      .app-logo .logo-stats {
+        color: var(--secondary);
+        font-weight: 900;
+      }
+
+      /* User Profile in Header */
+      .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: transparent;
+        border: 2px solid var(--border);
+        border-radius: 30px;
+        padding: 10px 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+      }
+
+      .user-profile:hover {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(18, 17, 202, 0.25);
+      }
+
+      .user-profile .user-name {
+        font-weight: 600;
+        color: var(--text);
+        transition: color 0.3s ease;
+        font-size: 1rem;
+      }
+
+      .user-profile:hover .user-name {
+        color: white;
+      }
+
+      .user-profile .user-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: white;
+        transition: background 0.3s ease;
+      }
+
+      .user-profile:hover .user-icon {
+        background: white;
+        color: var(--primary);
+      }
+
+      /* Main Content */
+      .main-content {
+        min-height: 100vh;
+        padding: 0;
+        width: 100%;
+        position: relative;
+      }
+
+      /* Header with background and overlay */
+      .page-header {
+        position: relative;
+        background: linear-gradient(135deg, var(--primary) 0%, #0f0eb8 100%);
+        color: white;
+        padding: 80px 40px 60px;
+        margin-bottom: 40px;
+      }
+
+      .page-header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        animation: float 20s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px);
+        }
+        50% {
+          transform: translateY(-10px);
+        }
+      }
+
+      .page-header .header-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .page-header h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0 0 16px 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .page-header .subtitle {
+        font-size: 1.3rem;
+        opacity: 0.9;
+        margin: 0;
+        font-weight: 400;
+      }
+
+      /* Page Content */
+      .page-content {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 40px 40px;
+      }
+
+      /* Players Controls */
+      .players-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        padding: 24px;
+        background: var(--card);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border);
+      }
+
+      .players-stats {
+        display: flex;
+        gap: 32px;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        margin: 0;
+      }
+
+      .stat-label {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin: 4px 0 0 0;
+      }
+
+      .btn-add-player {
+        background: linear-gradient(135deg, var(--primary) 0%, #0f0eb8 100%);
+        color: white;
+        border: none;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(18, 17, 202, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .btn-add-player:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(18, 17, 202, 0.4);
+      }
+
+      /* Players List */
+      .players-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 24px;
+        margin-bottom: 40px;
+      }
+
+      .player-card {
+        background: var(--card);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .player-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+      }
+
+      .player-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+      }
+
+      .player-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+      }
+
+      .player-info {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .player-avatar {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+      }
+
+      .player-details h3 {
+        margin: 0 0 4px 0;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .player-details .player-email {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .player-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .player-status.active {
+        background: rgba(40, 167, 69, 0.1);
+        color: var(--success);
+      }
+
+      .player-status.inactive {
+        background: rgba(108, 117, 125, 0.1);
+        color: #6c757d;
+      }
+
+      .player-team {
+        font-size: 0.9rem;
+        color: var(--muted);
+        margin-bottom: 20px;
+        font-style: italic;
+      }
+
+      .player-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+
+      .btn-action {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .btn-remove {
+        background: rgba(220, 53, 69, 0.1);
+        color: var(--danger);
+      }
+
+      .btn-remove:hover {
+        background: var(--danger);
+        color: white;
+      }
+
+      /* Empty State */
+      .empty-state {
+        text-align: center;
+        padding: 80px 40px;
+        background: var(--card);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border);
+      }
+
+      .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 24px;
+        opacity: 0.5;
+      }
+
+      .empty-state h3 {
+        font-size: 1.5rem;
+        margin: 0 0 16px 0;
+        color: var(--text);
+      }
+
+      .empty-state p {
+        font-size: 1.1rem;
+        color: var(--muted);
+        margin: 0 0 32px 0;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      /* Modal Styles */
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .modal-backdrop.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .modal {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0.9);
+        background: var(--card);
+        border-radius: 16px;
+        padding: 32px;
+        min-width: 400px;
+        max-width: 500px;
+        width: 90%;
+        z-index: 2001;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .modal.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, -50%) scale(1);
+      }
+
+      .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .modal-header h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .modal-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--muted);
+        padding: 8px;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+      }
+
+      .modal-close:hover {
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .modal-body {
+        margin-bottom: 24px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 2px solid var(--border);
+        border-radius: 8px;
+        font-size: 1rem;
+        transition: border-color 0.3s ease;
+        background: var(--card);
+        color: var(--text);
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+      }
+
+      .modal-footer {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+
+      .btn-modal {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-cancel {
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      .btn-cancel:hover {
+        background: var(--border);
+      }
+
+      .btn-submit {
+        background: var(--primary);
+        color: white;
+      }
+
+      .btn-submit:hover {
+        background: #0f0eb8;
+      }
+
+      /* Responsive Design */
+      @media (max-width: 768px) {
+        .hamburger-btn {
+          top: 20px;
+          left: 16px;
+          transform: none;
+          padding: 10px;
+          font-size: 1rem;
+        }
+
+        .hamburger-btn.sidebar-open {
+          left: 240px;
+        }
+
+        .page-header {
+          padding: 60px 20px 40px;
+        }
+
+        .page-header h1 {
+          font-size: 2.5rem;
+        }
+
+        .page-content {
+          padding: 0 20px 40px;
+        }
+
+        .players-controls {
+          flex-direction: column;
+          gap: 20px;
+          text-align: center;
+        }
+
+        .players-stats {
+          justify-content: center;
+        }
+
+        .players-list {
+          grid-template-columns: 1fr;
+        }
+
+        .app-header {
+          flex-direction: column;
+          gap: 20px;
+          align-items: center;
+          text-align: center;
+          padding: 24px 20px;
+          position: static;
+        }
+
+        .app-logo {
+          font-size: 1.8rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Hamburger Menu Button -->
+    <button
+      class="hamburger-btn"
+      id="hamburgerBtn"
+      aria-label="Open navigation menu"
+    >
+      ☰
+    </button>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="layout">
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
+        <button
+          class="sidebar-close"
+          id="sidebarClose"
+          aria-label="Close navigation"
+        >
+          &times;
+        </button>
+        <div class="brand" id="sidebar-logo">
+          🏸 <span class="logo-shuttle">Shuttle</span
+          ><span class="logo-stats">Stats</span>
+        </div>
+        <nav class="sidebar-nav">
+          <div class="nav-group">
+            <div class="nav-label">Overview</div>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a
+                  id="navCoachDashboard"
+                  class="nav-link"
+                  href="coach-dashboard.html"
+                  >Coach Dashboard</a
+                >
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="schedule.html">Schedule</a>
+              </li>
+            </ul>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label">Player Management</div>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a class="nav-link active" href="my-players.html">
+                  My Players
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="training.html">Training</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="matches.html">Matches</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="goals.html">Goals</a>
+              </li>
+            </ul>
+          </div>
+          <div class="nav-group">
+            <div class="nav-label">Analytics</div>
+            <ul class="nav-list">
+              <li class="nav-item">
+                <a class="nav-link" href="progress.html">Progress</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="achievement.html">Achievements</a>
+              </li>
+            </ul>
+          </div>
+        </nav>
+        <div class="sidebar-footer">
+          <button class="signout-btn" id="signout-btn">Sign Out</button>
+        </div>
+      </aside>
+
+      <!-- App Header with Logo and User Profile -->
+      <header class="app-header">
+        <a href="javascript:void(0)" id="main-logo-link" class="app-logo">
+          🏸 <span class="logo-shuttle">Shuttle</span
+          ><span class="logo-stats">Stats</span>
+        </a>
+        <div class="user-profile" id="userProfile" title="Profile & Settings">
+          <span class="user-name">Coach</span>
+          <span class="user-icon">⚙️</span>
+        </div>
+      </header>
+
+      <!-- Main Content -->
+      <main class="main-content" id="mainContent">
+        <!-- Page Header -->
+        <header class="page-header">
+          <div class="header-content">
+            <h1>My Players</h1>
+            <p class="subtitle">Manage your player roster</p>
+          </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="page-content">
+          <!-- Players Controls -->
+          <div class="players-controls">
+            <div class="players-stats">
+              <div class="stat-item">
+                <div class="stat-number" id="totalPlayers">0</div>
+                <div class="stat-label">Total Players</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-number" id="activePlayers">0</div>
+                <div class="stat-label">Active Players</div>
+              </div>
+            </div>
+            <button class="btn-add-player" id="addPlayerBtn">
+              <span>➕</span>
+              Add Player
+            </button>
+          </div>
+
+          <!-- Players List -->
+          <div class="players-list" id="playersList">
+            <!-- Players will be loaded here by JavaScript -->
+          </div>
+        </div>
+      </main>
+
+      <!-- Add Player Modal -->
+      <div class="modal-backdrop" id="addPlayerBackdrop">
+        <div class="modal" id="addPlayerModal">
+          <div class="modal-header">
+            <h3>Add New Player</h3>
+            <button class="modal-close" id="closeAddPlayerModal">×</button>
+          </div>
+          <div class="modal-body">
+            <form id="addPlayerForm">
+              <div class="form-group">
+                <label class="form-label" for="playerName">Player Name *</label>
+                <input
+                  type="text"
+                  id="playerName"
+                  class="form-input"
+                  required
+                  placeholder="Enter player's full name"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="playerEmail"
+                  >Email Address *</label
+                >
+                <input
+                  type="email"
+                  id="playerEmail"
+                  class="form-input"
+                  required
+                  placeholder="Enter player's email address"
+                />
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-modal btn-cancel" id="cancelAddPlayer">
+              Cancel
+            </button>
+            <button class="btn-modal btn-submit" id="submitAddPlayer">
+              Add Player
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Remove Player Modal -->
+      <div class="modal-backdrop" id="removePlayerBackdrop">
+        <div class="modal" id="removePlayerModal">
+          <div class="modal-header">
+            <h3>Remove Player</h3>
+            <button class="modal-close" id="closeRemovePlayerModal">×</button>
+          </div>
+          <div class="modal-body">
+            <p>
+              Are you sure you want to remove
+              <strong id="removePlayerName"></strong> from your player list?
+            </p>
+            <p style="color: var(--muted); font-size: 0.9rem">
+              This action cannot be undone.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button class="btn-modal btn-cancel" id="cancelRemovePlayer">
+              Cancel
+            </button>
+            <button
+              class="btn-modal btn-submit"
+              style="background: var(--danger)"
+              id="confirmRemovePlayer"
+            >
+              Remove Player
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="./config/firebase-config.js"></script>
+    <script src="./js/toast.js"></script>
+    <script src="./js/loading.js"></script>
+    <script src="./js/app.js"></script>
+    <script src="./js/navigation.js"></script>
+    <script type="module" src="./js/my-players.js" defer></script>
+  </body>
+</html>
