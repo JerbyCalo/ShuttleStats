@@ -1,18 +1,29 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "Public/**/*",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/.*",
-      "dest": "/404.html"
-    }
-  ]
+  "name": "shuttlestats",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ShuttleStats static web app",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint \"public/js/**/*.js\"",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test:rules": "node tests/rules/rules.test.mjs",
+    "deploy:indexes": "firebase deploy --only firestore:indexes",
+    "backfill:sessionStart": "node tools/backfill-sessionStart.mjs $PROJECT_ID"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.9.0",
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "eslint": "^9.9.0",
+    "firebase-admin": "^13.5.0",
+    "globals": "^15.9.0",
+    "prettier": "^3.3.3"
+  },
+  "prettier": {
+    "printWidth": 90,
+    "singleQuote": true,
+    "semi": true,
+    "trailingComma": "es5"
+  }
 }
