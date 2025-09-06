@@ -1,4 +1,4 @@
-// Public/config/firebase-config.js
+// public/config/firebase-config.js
 // ShuttleStats v2 - Firebase Configuration (Single Project)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import {

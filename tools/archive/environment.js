@@ -1,4 +1,4 @@
-// Public/config/environment.js
+// public/config/environment.js
 // Simplified environment detection for Vercel deployment
 
 export const getEnvironment = () => {
