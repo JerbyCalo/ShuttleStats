@@ -17,7 +17,7 @@ _.pid
 _.seed
 \*.pid.lock
 
-# Coverage directory used by tools like istanbul
+# Coverage directory
 
 coverage/
 
@@ -31,9 +31,7 @@ _.swo
 
 # OS generated files
 
-.DS*Store
-.DS_Store?
-.*\*
+.DS_Store
 .Spotlight-V100
 .Trashes
 ehthumbs.db
@@ -47,7 +45,7 @@ Thumbs.db
 .env.test.local
 .env.production.local
 
-# Build outputs (if any)
+# Build outputs
 
 dist/
 build/
@@ -56,12 +54,13 @@ build/
 
 tools/archive/
 
-# Git
+# Git (no need to deploy these)
 
 .git/
-.gitignore
 
-# Documentation (optional - remove if you want to include these)
+# Documentation (optional)
 
 PROJECT-ROADMAP.md
 README.md
+DEPLOYMENT-GUIDE.md
+PRODUCTION-READY.md
