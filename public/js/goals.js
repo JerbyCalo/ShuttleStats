@@ -67,8 +67,8 @@ import { checkAuthenticationState } from "./auth-utils.js";
   }
 
   // Get status badge class
-  // Get status badge class
   function getStatusClass(status) {
+    if (typeof status !== "string") return "status-not-started";
     switch (status.toLowerCase()) {
       case "completed":
         return "status-completed";

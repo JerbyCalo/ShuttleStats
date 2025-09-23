@@ -902,7 +902,24 @@ import {
         googleBtn.addEventListener("click", LoginForm.handleGoogleSignIn);
       }
 
+      // Setup password toggle functionality
+      LoginForm.setupPasswordToggle();
+
       console.log("Login form initialized");
+    },
+
+    setupPasswordToggle: () => {
+      const toggleButton = document.getElementById('passwordToggle');
+      const passwordInput = document.getElementById('password');
+      
+      if (toggleButton && passwordInput) {
+        toggleButton.addEventListener('click', () => {
+          const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+          passwordInput.setAttribute('type', type);
+          // Toggle eye icon
+          toggleButton.textContent = type === 'password' ? '👁️' : '🙈';
+        });
+      }
     },
 
     handleSubmit: async (e) => {

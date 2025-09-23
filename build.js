@@ -8,7 +8,7 @@ import {
 } from "fs";
 import { join, dirname } from "path";
 
-const sourceDir = "Public";
+const sourceDir = "public";
 const targetDir = "dist";
 
 // Clean target directory

@@ -15,6 +15,8 @@ import {
   getDoc,
   onSnapshot,
   limit,
+  addDoc,
+  serverTimestamp,
 } from "../config/firebase-config.js";
 
 // Import authentication utilities for better role detection
@@ -39,6 +41,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Get result badge class
   function getResultClass(result) {
+    if (typeof result !== "string") return "result-loss";
     switch (result.toLowerCase()) {
       case "win":
         return "result-win";
@@ -76,11 +79,212 @@ import { checkAuthenticationState } from "./auth-utils.js";
     }
   }
 
+  // Get coach name by ID (for player mode feedback display)
+  async function getCoachName(coachId) {
+    try {
+      const coachDoc = await getDoc(doc(db, "users", coachId));
+      if (coachDoc.exists()) {
+        const coachData = coachDoc.data();
+        return `${coachData.name.first} ${coachData.name.last}`.trim();
+      }
+      return "Coach";
+    } catch (error) {
+      console.error("Error fetching coach name:", error);
+      return "Coach";
+    }
+  }
+
+  // Submit feedback for a match
+  async function submitMatchFeedback(matchId) {
+    const currentUserId = sessionStorage.getItem("currentUserId");
+    const currentUserRole = sessionStorage.getItem("userRole");
+    
+    if (!currentUserId || currentUserRole !== "coach") {
+      console.error("Only coaches can submit feedback");
+      return false;
+    }
+
+    const feedbackTextarea = document.querySelector(`[data-match-feedback-session-id="${matchId}"] .feedback-textarea`);
+    const submitBtn = document.querySelector(`[data-match-feedback-session-id="${matchId}"] .feedback-submit-btn`);
+    
+    if (!feedbackTextarea || !feedbackTextarea.value.trim()) {
+      if (typeof showToast === "function") {
+        showToast("Please enter feedback before submitting", "error");
+      }
+      return false;
+    }
+
+    const feedbackText = feedbackTextarea.value.trim();
+    
+    // Get match data to find playerId
+    try {
+      const matchDoc = await getDoc(doc(db, "matches", matchId));
+      if (!matchDoc.exists()) {
+        throw new Error("Match not found");
+      }
+      
+      const matchData = matchDoc.data();
+      
+      // Disable submit button during submission
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+      
+      // Create feedback document
+      const feedbackData = {
+        matchId: matchId, // Using matchId instead of trainingSessionId
+        coachId: currentUserId,
+        playerId: matchData.playerId,
+        content: feedbackText,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      };
+
+      console.log("Submitting match feedback data:", feedbackData);
+      await addDoc(collection(db, "feedback"), feedbackData);
+      
+      // Clear textarea and show success message
+      feedbackTextarea.value = "";
+      
+      if (typeof showToast === "function") {
+        showToast("Match feedback submitted successfully!", "success");
+      }
+      
+      console.log("Match feedback submitted for match:", matchId);
+      return true;
+      
+    } catch (error) {
+      console.error("Error submitting match feedback:", error);
+      
+      if (typeof showToast === "function") {
+        showToast("Failed to submit feedback. Please try again.", "error");
+      }
+      
+      return false;
+    } finally {
+      // Re-enable submit button
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit Feedback";
+    }
+  }
+
+  // Load and display feedback for a match
+  async function loadMatchFeedback(matchId, containerElement) {
+    if (!containerElement) {
+      console.error("No container element provided for feedback display");
+      return;
+    }
+
+    try {
+      const q = query(
+        collection(db, "feedback"),
+        where("matchId", "==", matchId),
+        where("playerId", "==", auth.currentUser.uid),
+        orderBy("createdAt", "desc")
+      );
+
+      const querySnapshot = await getDocs(q);
+      const feedbackItems = [];
+      
+      for (const doc of querySnapshot.docs) {
+        const feedbackData = { id: doc.id, ...doc.data() };
+        const coachName = await getCoachName(feedbackData.coachId);
+        
+        feedbackItems.push({
+          ...feedbackData,
+          coachName: coachName
+        });
+      }
+
+      // Clear existing content
+      containerElement.innerHTML = "";
+
+      if (feedbackItems.length === 0) {
+        containerElement.innerHTML = `
+          <div class="no-feedback">
+            No feedback available for this match yet.
+          </div>
+        `;
+        return;
+      }
+
+      // Render feedback items
+      feedbackItems.forEach(feedback => {
+        const feedbackElement = document.createElement("div");
+        feedbackElement.className = "feedback-item";
+        
+        // Format date
+        let feedbackDate = "Recently";
+        if (feedback.createdAt && feedback.createdAt.toDate) {
+          feedbackDate = feedback.createdAt.toDate().toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+        }
+        
+        feedbackElement.innerHTML = `
+          <div class="feedback-meta">
+            <span class="feedback-coach">Coach ${feedback.coachName}</span>
+            <span class="feedback-date">${feedbackDate}</span>
+          </div>
+          <div class="feedback-content">${feedback.content}</div>
+        `;
+        
+        containerElement.appendChild(feedbackElement);
+      });
+
+    } catch (error) {
+      console.error("Error loading match feedback:", error);
+      containerElement.innerHTML = `
+        <div class="no-feedback">
+          Unable to load feedback. Please try again later.
+        </div>
+      `;
+    }
+  }
+
+  // Set up real-time listener for match feedback updates (for players)
+  function setupMatchFeedbackListener(matchId, containerElement) {
+    if (!containerElement) return;
+
+    try {
+      const q = query(
+        collection(db, "feedback"),
+        where("matchId", "==", matchId),
+        where("playerId", "==", auth.currentUser.uid),
+        orderBy("createdAt", "desc")
+      );
+
+      const unsubscribe = onSnapshot(q, async (snapshot) => {
+        console.log("Real-time match feedback update received for match:", matchId);
+        
+        // Reload feedback when changes occur
+        await loadMatchFeedback(matchId, containerElement);
+      }, (error) => {
+        console.error("Error in match feedback listener:", error);
+      });
+
+      // Store the unsubscribe function for cleanup
+      if (!containerElement.feedbackListener) {
+        containerElement.feedbackListener = unsubscribe;
+      }
+    } catch (error) {
+      console.error("Error setting up match feedback listener:", error);
+    }
+  }
+
   // Create match card
   async function createMatchCard(match) {
     const card = document.createElement("div");
     card.className = "match-card";
     card.dataset.matchId = match.id;
+
+    // Get current user role from session storage or window.currentUserData
+    let currentUserRole = sessionStorage.getItem("userRole");
+    if (!currentUserRole && window.currentUserData) {
+      currentUserRole = window.currentUserData.role;
+    }
 
     // For coach mode, add player name to the header
     let playerInfo = "";
@@ -89,6 +293,45 @@ import { checkAuthenticationState } from "./auth-utils.js";
       playerInfo = `<div class="player-info" style="color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">
         👤 ${playerName}
        </div>`;
+    }
+
+    // Create feedback section based on user role
+    let feedbackSection = "";
+    if (currentUserRole === "coach") {
+      // Coach feedback form
+      feedbackSection = `
+        <div class="feedback-section" data-match-feedback-session-id="${match.id}">
+          <div class="feedback-form">
+            <div class="feedback-form-header">
+              <span>💬</span>
+              <span>Add Match Feedback for Player</span>
+            </div>
+            <textarea 
+              class="feedback-textarea" 
+              placeholder="Provide detailed feedback about this match performance..."
+              rows="3"
+            ></textarea>
+            <button type="button" class="feedback-submit-btn">
+              Submit Feedback
+            </button>
+          </div>
+        </div>
+      `;
+    } else if (currentUserRole === "player") {
+      // Player feedback display
+      feedbackSection = `
+        <div class="feedback-section">
+          <div class="feedback-display">
+            <div class="feedback-display-header">
+              <span>💬</span>
+              <span>Coach Feedback</span>
+            </div>
+            <div class="feedback-items" data-match-feedback-display="${match.id}">
+              <!-- Feedback items will be loaded here -->
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     card.innerHTML = `
@@ -126,20 +369,56 @@ import { checkAuthenticationState } from "./auth-utils.js";
       </div>
       
       <div class="match-card-actions">
-        <button class="action-btn edit-btn" data-action="edit" data-match-id="${
-          match.id
-        }" title="Edit Match">
-          <span class="btn-icon">✏️</span>
-          <span class="btn-text">Edit</span>
-        </button>
-        <button class="action-btn delete-btn" data-action="delete" data-match-id="${
-          match.id
-        }" title="Delete Match">
-          <span class="btn-icon">🗑️</span>
-          <span class="btn-text">Delete</span>
-        </button>
+        ${(() => {
+          // Only players can edit/delete their own matches
+          // Coaches get read-only view regardless of their involvement
+          const currentUserId = sessionStorage.getItem("currentUserId");
+          
+          if (currentUserRole === "player" && currentUserId === match.playerId) {
+            // Players can edit/delete their own matches
+            return `
+              <button class="action-btn edit-btn" data-action="edit" data-match-id="${match.id}" title="Edit Match">
+                <span class="btn-icon">✏️</span>
+                <span class="btn-text">Edit</span>
+              </button>
+              <button class="action-btn delete-btn" data-action="delete" data-match-id="${match.id}" title="Delete Match">
+                <span class="btn-icon">🗑️</span>
+                <span class="btn-text">Delete</span>
+              </button>
+            `;
+          } else {
+            // Read-only view for coaches and other users
+            return `
+              <div class="read-only-indicator" style="color: var(--muted); font-style: italic; padding: 8px;">
+              </div>
+            `;
+          }
+        })()}
       </div>
+      ${feedbackSection}
     `;
+
+    // After creating the card, set up event listeners and load data based on role
+    setTimeout(async () => {
+      if (currentUserRole === "coach") {
+        // Add event listener for feedback submission
+        const feedbackForm = card.querySelector(`[data-match-feedback-session-id="${match.id}"]`);
+        const submitBtn = feedbackForm?.querySelector('.feedback-submit-btn');
+        
+        if (submitBtn) {
+          submitBtn.addEventListener('click', async () => {
+            await submitMatchFeedback(match.id);
+          });
+        }
+      } else if (currentUserRole === "player") {
+        // Load existing feedback for players and set up real-time listener
+        const feedbackDisplay = card.querySelector(`[data-match-feedback-display="${match.id}"]`);
+        if (feedbackDisplay) {
+          await loadMatchFeedback(match.id, feedbackDisplay);
+          setupMatchFeedbackListener(match.id, feedbackDisplay);
+        }
+      }
+    }, 0);
 
     return card;
   }
@@ -827,6 +1106,22 @@ import { checkAuthenticationState } from "./auth-utils.js";
     console.log("Success message shown:", message);
   }
 
+  // Hide 'Add New Match' button for coach accounts
+  function hideAddButtonForCoach() {
+    const addButton = document.getElementById('addMatchBtn');
+    if (addButton && window.currentUserData && window.currentUserData.role === 'coach') {
+      addButton.classList.add('hidden-for-coach');
+      console.log("Add Match button hidden for coach account.");
+    } else if (addButton) {
+      // Also check sessionStorage as fallback
+      const userRole = sessionStorage.getItem("userRole");
+      if (userRole === 'coach') {
+        addButton.classList.add('hidden-for-coach');
+        console.log("Add Match button hidden for coach account (via sessionStorage).");
+      }
+    }
+  }
+
   // Initialize matches page when DOM is ready
   document.addEventListener("DOMContentLoaded", async function () {
     console.log("Matches page initializing...");
@@ -853,6 +1148,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
       // Coach mode: Transform page for management view
       isCoachMode = true;
       console.log("Coach mode detected - setting up management interface");
+
+      // Hide 'Add New Match' button for coaches
+      hideAddButtonForCoach();
 
       // Set up coach mode UI
       setupCoachMode();

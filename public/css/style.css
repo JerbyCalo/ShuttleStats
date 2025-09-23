@@ -1077,3 +1077,8 @@ section {
     display: none;
   }
 }
+
+/* Role-based UI controls */
+.hidden-for-coach {
+  display: none !important;
+}

@@ -19,6 +19,7 @@ import {
   collection,
   addDoc,
   getDocs,
+  serverTimestamp,
   query,
   where,
   orderBy,
@@ -72,6 +73,7 @@ export {
   onSnapshot,
   writeBatch,
   getCountFromServer,
+  serverTimestamp,
 };
 
 // Global auth state

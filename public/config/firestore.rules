@@ -121,5 +121,33 @@ service cloud.firestore {
       allow delete: if request.auth != null &&
         resource.data.coachId == request.auth.uid;
     }
+
+    // =====================
+    // Feedback collection
+    // =====================
+    match /feedback/{feedbackId} {
+      // Players and coaches can read feedback that involves them
+      allow read: if request.auth != null &&
+        (resource.data.playerId == request.auth.uid ||
+         resource.data.coachId == request.auth.uid);
+
+      // Allow feedback creation if user is authenticated and setting themselves as coach
+      // We'll validate the coach role in the client-side logic
+      allow create: if request.auth != null &&
+        request.resource.data.keys().hasAll(['coachId','playerId','content']) &&
+        request.auth.uid == request.resource.data.coachId &&
+        // Ensure content is not empty
+        request.resource.data.content != null &&
+        request.resource.data.content != "";
+
+      // Only the coach who created the feedback can update it
+      allow update: if request.auth != null &&
+        resource.data.coachId == request.auth.uid &&
+        request.auth.uid == request.resource.data.coachId;
+
+      // Only the coach who created the feedback can delete it
+      allow delete: if request.auth != null &&
+        resource.data.coachId == request.auth.uid;
+    }
   }
 }

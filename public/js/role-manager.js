@@ -10,7 +10,12 @@
   const userRole = sessionStorage.getItem("userRole");
   const currentUserId = sessionStorage.getItem("currentUserId");
   const currentUserData = JSON.parse(sessionStorage.getItem("currentUser"));
-  const currentPage = window.location.pathname.split("/").pop();
+  
+  // Ensure currentPage is defined to avoid undefined errors in template literals
+  const currentPage =
+    (window.currentPage && String(window.currentPage)) ||
+    window.location.pathname.split("/").pop() ||
+    "";
 
   // Central dashboard navigation function
   function navigateToDashboard() {
