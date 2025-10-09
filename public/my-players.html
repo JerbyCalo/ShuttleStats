@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -28,8 +28,9 @@
 
       body {
         margin: 0;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: radial-gradient(
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background:
+          radial-gradient(
             1000px 600px at 10% -10%,
             rgba(18, 17, 202, 0.06),
             transparent 60%
@@ -108,7 +109,9 @@
         z-index: 1001;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.3s ease, visibility 0.3s ease;
+        transition:
+          opacity 0.3s ease,
+          visibility 0.3s ease;
       }
 
       .sidebar-overlay.active {
@@ -208,60 +211,6 @@
         box-shadow: 0 4px 12px rgba(18, 17, 202, 0.3);
       }
 
-      .sidebar-footer {
-        margin-top: auto;
-        padding-top: 16px;
-        border-top: 1px solid var(--sidebar-hover);
-      }
-
-      .profile {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        border-radius: 8px;
-        background: var(--sidebar-hover);
-        margin-bottom: 12px;
-        transition: background 0.3s ease;
-      }
-
-      .profile:hover {
-        background: #718096;
-      }
-
-      .profile .icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        color: white;
-      }
-
-      .signout-btn {
-        width: 100%;
-        padding: 12px 16px;
-        background: linear-gradient(
-          135deg,
-          var(--primary) 0%,
-          var(--secondary) 100%
-        );
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
-
-      .signout-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(18, 17, 202, 0.4);
-      }
-
       /* App Header with Logo and User Profile */
       .app-header {
         display: flex;
@@ -307,6 +256,10 @@
       }
 
       /* User Profile in Header */
+      .user-profile-container {
+        position: relative;
+      }
+
       .user-profile {
         display: flex;
         align-items: center;
@@ -333,6 +286,7 @@
         color: var(--text);
         transition: color 0.3s ease;
         font-size: 1rem;
+        pointer-events: none;
       }
 
       .user-profile:hover .user-name {
@@ -350,11 +304,90 @@
         font-size: 18px;
         color: white;
         transition: background 0.3s ease;
+        cursor: pointer;
       }
 
       .user-profile:hover .user-icon {
         background: white;
         color: var(--primary);
+      }
+
+      /* Settings Dropdown Menu */
+      .settings-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        min-width: 220px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1000;
+        overflow: hidden;
+      }
+
+      .settings-dropdown.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        color: var(--text);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        width: 100%;
+        text-align: left;
+        font-size: 1rem;
+      }
+
+      .dropdown-item:hover {
+        background: var(--bg);
+        color: var(--primary);
+      }
+
+      .dropdown-item:active {
+        background: rgba(18, 17, 202, 0.1);
+      }
+
+      .dropdown-icon {
+        font-size: 1.2rem;
+        width: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .dropdown-text {
+        font-weight: 500;
+        flex: 1;
+      }
+
+      .dropdown-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 4px 0;
+      }
+
+      /* Logout item special styling */
+      .dropdown-item[data-action='logout'] {
+        color: #dc3545;
+      }
+
+      .dropdown-item[data-action='logout']:hover {
+        background: #dc3545;
+        color: white;
       }
 
       /* Main Content */
@@ -375,7 +408,7 @@
       }
 
       .page-header::before {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
@@ -499,7 +532,7 @@
       }
 
       .player-card::before {
-        content: "";
+        content: '';
         position: absolute;
         top: 0;
         left: 0;
@@ -648,7 +681,9 @@
         z-index: 2000;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.3s ease, visibility 0.3s ease;
+        transition:
+          opacity 0.3s ease,
+          visibility 0.3s ease;
       }
 
       .modal-backdrop.active {
@@ -833,11 +868,7 @@
   </head>
   <body>
     <!-- Hamburger Menu Button -->
-    <button
-      class="hamburger-btn"
-      id="hamburgerBtn"
-      aria-label="Open navigation menu"
-    >
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation menu">
       ☰
     </button>
 
@@ -847,26 +878,19 @@
     <div class="layout">
       <!-- Sidebar -->
       <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
-        <button
-          class="sidebar-close"
-          id="sidebarClose"
-          aria-label="Close navigation"
-        >
-          &times;
-        </button>
         <div class="brand" id="sidebar-logo">
-          🏸 <span class="logo-shuttle">Shuttle</span
-          ><span class="logo-stats">Stats</span>
+          <span class="logo-icon">🏸</span>
+          <span class="logo-text"
+            ><span class="logo-shuttle">Shuttle</span
+            ><span class="logo-stats">Stats</span></span
+          >
         </div>
         <nav class="sidebar-nav">
           <div class="nav-group">
             <div class="nav-label">Overview</div>
             <ul class="nav-list">
               <li class="nav-item">
-                <a
-                  id="navCoachDashboard"
-                  class="nav-link"
-                  href="coach-dashboard.html"
+                <a id="navCoachDashboard" class="nav-link" href="coach-dashboard.html"
                   >Coach Dashboard</a
                 >
               </li>
@@ -879,9 +903,7 @@
             <div class="nav-label">Player Management</div>
             <ul class="nav-list">
               <li class="nav-item">
-                <a class="nav-link active" href="my-players.html">
-                  My Players
-                </a>
+                <a class="nav-link active" href="my-players.html"> My Players </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="training.html">Training</a>
@@ -906,20 +928,42 @@
             </ul>
           </div>
         </nav>
-        <div class="sidebar-footer">
-          <button class="signout-btn" id="signout-btn">Sign Out</button>
-        </div>
+        <!-- Hidden signout button for dropdown functionality -->
+        <button class="signout-btn" id="signout-btn" style="display: none">
+          Sign Out
+        </button>
       </aside>
 
       <!-- App Header with Logo and User Profile -->
       <header class="app-header">
         <a href="javascript:void(0)" id="main-logo-link" class="app-logo">
-          🏸 <span class="logo-shuttle">Shuttle</span
-          ><span class="logo-stats">Stats</span>
+          <span class="logo-icon">🏸</span>
+          <span class="logo-text"
+            ><span class="logo-shuttle">Shuttle</span
+            ><span class="logo-stats">Stats</span></span
+          >
         </a>
-        <div class="user-profile" id="userProfile" title="Profile & Settings">
-          <span class="user-name">Coach</span>
-          <span class="user-icon">⚙️</span>
+        <div class="user-profile-container">
+          <div class="user-profile" id="userProfile" title="Profile & Settings">
+            <span class="user-name">Coach</span>
+            <span class="user-icon">⚙️</span>
+          </div>
+          <!-- Settings Dropdown Menu -->
+          <div class="settings-dropdown" id="settingsDropdown">
+            <a href="profile.html" class="dropdown-item" data-action="profile">
+              <span class="dropdown-icon">👤</span>
+              <span class="dropdown-text">Profile</span>
+            </a>
+            <a href="#" class="dropdown-item" data-action="notifications">
+              <span class="dropdown-icon">🔔</span>
+              <span class="dropdown-text">Notifications</span>
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item" data-action="logout">
+              <span class="dropdown-icon">🚪</span>
+              <span class="dropdown-text">Logout</span>
+            </a>
+          </div>
         </div>
       </header>
 
@@ -980,9 +1024,7 @@
                 />
               </div>
               <div class="form-group">
-                <label class="form-label" for="playerEmail"
-                  >Email Address *</label
-                >
+                <label class="form-label" for="playerEmail">Email Address *</label>
                 <input
                   type="email"
                   id="playerEmail"
@@ -994,12 +1036,8 @@
             </form>
           </div>
           <div class="modal-footer">
-            <button class="btn-modal btn-cancel" id="cancelAddPlayer">
-              Cancel
-            </button>
-            <button class="btn-modal btn-submit" id="submitAddPlayer">
-              Add Player
-            </button>
+            <button class="btn-modal btn-cancel" id="cancelAddPlayer">Cancel</button>
+            <button class="btn-modal btn-submit" id="submitAddPlayer">Add Player</button>
           </div>
         </div>
       </div>
@@ -1021,9 +1059,7 @@
             </p>
           </div>
           <div class="modal-footer">
-            <button class="btn-modal btn-cancel" id="cancelRemovePlayer">
-              Cancel
-            </button>
+            <button class="btn-modal btn-cancel" id="cancelRemovePlayer">Cancel</button>
             <button
               class="btn-modal btn-submit"
               style="background: var(--danger)"
@@ -1042,6 +1078,7 @@
     <script src="./js/loading.js"></script>
     <script src="./js/app.js"></script>
     <script src="./js/navigation.js"></script>
+    <script src="./js/settings-dropdown.js"></script>
     <script type="module" src="./js/my-players.js" defer></script>
   </body>
 </html>

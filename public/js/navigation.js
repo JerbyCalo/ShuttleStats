@@ -9,9 +9,10 @@ console.log("navigation.js loaded");
     sidebar = document.getElementById("sidebar");
     sidebarOverlay = document.getElementById("sidebarOverlay");
     hamburgerBtn = document.getElementById("hamburgerBtn");
+    // Close button is optional now
     sidebarClose = document.getElementById("sidebarClose");
 
-    if (!sidebar || !sidebarOverlay || !hamburgerBtn || !sidebarClose) {
+    if (!sidebar || !sidebarOverlay || !hamburgerBtn) {
       console.warn("Navigation elements not found");
       return false;
     }
@@ -101,8 +102,10 @@ console.log("navigation.js loaded");
       toggleSidebar();
     });
 
-    // Close button click
-    sidebarClose.addEventListener("click", closeSidebar);
+    // Close button click (optional)
+    if (sidebarClose) {
+      sidebarClose.addEventListener("click", closeSidebar);
+    }
 
     // Overlay click
     sidebarOverlay.addEventListener("click", closeSidebar);

@@ -1,5 +1,5 @@
 // ShuttleStats v2 - Player Dashboard population
-console.log("player-dashboard.js loaded");
+console.log('player-dashboard.js loaded');
 
 // Import Firebase functions for invitation handling and data queries
 import {
@@ -16,81 +16,149 @@ import {
   orderBy,
   limit,
   getCountFromServer,
-} from "../config/firebase-config.js";
+} from '../config/firebase-config.js';
 
 // Import authentication utilities
-import { checkAuthenticationState } from "./auth-utils.js";
+import { checkAuthenticationState } from './auth-utils.js';
 
 (function () {
   function setActiveNav() {
-    const dashboardLink = document.getElementById("navDashboard");
+    const dashboardLink = document.getElementById('navDashboard');
     if (dashboardLink) {
-      dashboardLink.classList.add("active");
-      console.log("Dashboard nav set to active");
+      dashboardLink.classList.add('active');
+      console.log('Dashboard nav set to active');
     }
   }
 
   function populateHeader(data) {
-    const dateEl = document.getElementById("dateString");
+    const dateEl = document.getElementById('dateString');
     if (dateEl) {
       dateEl.textContent = data.dateString;
-      console.log("Date populated:", data.dateString);
+      console.log('Date populated:', data.dateString);
     }
   }
 
   // Calculate metrics from Firestore data
   async function calculateMetrics(currentUserId) {
-    console.log("Calculating metrics from Firestore for user:", currentUserId);
-
+    // Patched by AI assistant to resolve async stat loading.
     try {
+      let targetUserId = currentUserId;
+
+      if (!targetUserId) {
+        const authState = await checkAuthenticationState();
+        if (!authState.authenticated) {
+          throw new Error('User not authenticated');
+        }
+        targetUserId = authState.user.uid;
+      }
+
+      console.log('Calculating metrics from Firestore for user:', targetUserId);
+
       const today = new Date();
-      const thirtyDaysAgo = new Date(
-        today.getTime() - 30 * 24 * 60 * 60 * 1000
-      );
+      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgoIso = thirtyDaysAgo.toISOString().split('T')[0];
 
-      // Get training sessions count (last 30 days)
-      const trainingQuery = query(
-        collection(db, "training"),
-        where("playerId", "==", currentUserId),
-        where("date", ">=", thirtyDaysAgo.toISOString().split("T")[0])
-      );
-      const trainingCountSnapshot = await getCountFromServer(trainingQuery);
-      const trainingSessions = trainingCountSnapshot.data().count;
+      const resolveCount = async (queries) => {
+        if (!queries || queries.length === 0) {
+          return 0;
+        }
 
-      // Get matches count (last 30 days)
-      const matchesQuery = query(
-        collection(db, "matches"),
-        where("playerId", "==", currentUserId),
-        where("date", ">=", thirtyDaysAgo.toISOString().split("T")[0])
-      );
-      const matchesCountSnapshot = await getCountFromServer(matchesQuery);
-      const matchesPlayed = matchesCountSnapshot.data().count;
+        const counts = await Promise.all(
+          queries.map(async (q) => {
+            if (!q) {
+              return 0;
+            }
 
-      // Get goals achieved count
-      const goalsQuery = query(
-        collection(db, "goals"),
-        where("playerId", "==", currentUserId),
-        where("status", "==", "Completed")
-      );
-      const goalsCountSnapshot = await getCountFromServer(goalsQuery);
-      const goalsAchieved = goalsCountSnapshot.data().count;
+            try {
+              const snapshot = await getCountFromServer(q);
+              return snapshot?.data()?.count ?? 0;
+            } catch (error) {
+              console.warn('Count query failed:', error);
+              return 0;
+            }
+          })
+        );
 
-      // Calculate win streak from recent matches
-      const recentMatchesQuery = query(
-        collection(db, "matches"),
-        where("playerId", "==", currentUserId),
-        orderBy("date", "desc"),
-        limit(10)
-      );
-      const recentMatchesSnapshot = await getDocs(recentMatchesQuery);
-      const recentMatches = recentMatchesSnapshot.docs.map((doc) => doc.data());
+        return counts.find((count) => count > 0) ?? (counts.length ? counts[0] : 0);
+      };
+
+      const pickDocs = async (queries) => {
+        if (!queries || queries.length === 0) {
+          return [];
+        }
+
+        for (const q of queries) {
+          if (!q) {
+            continue;
+          }
+
+          try {
+            const snapshot = await getDocs(q);
+            if (!snapshot.empty) {
+              return snapshot.docs.map((docItem) => docItem.data());
+            }
+          } catch (error) {
+            console.warn('Recent matches query failed:', error);
+          }
+        }
+
+        return [];
+      };
+
+      const trainingSessions = await resolveCount([
+        query(
+          collection(db, 'training'),
+          where('playerId', '==', targetUserId),
+          where('date', '>=', thirtyDaysAgoIso)
+        ),
+        query(collection(db, 'training'), where('playerId', '==', targetUserId)),
+        query(collection(db, 'training_sessions'), where('userId', '==', targetUserId)),
+      ]);
+
+      const matchesPlayed = await resolveCount([
+        query(
+          collection(db, 'matches'),
+          where('playerId', '==', targetUserId),
+          where('date', '>=', thirtyDaysAgoIso)
+        ),
+        query(collection(db, 'matches'), where('playerId', '==', targetUserId)),
+        query(collection(db, 'matches'), where('userId', '==', targetUserId)),
+      ]);
+
+      const goalsAchieved = await resolveCount([
+        query(
+          collection(db, 'goals'),
+          where('playerId', '==', targetUserId),
+          where('status', '==', 'Completed')
+        ),
+        query(
+          collection(db, 'goals'),
+          where('userId', '==', targetUserId),
+          where('status', '==', 'Completed')
+        ),
+      ]);
+
+      const recentMatches = await pickDocs([
+        query(
+          collection(db, 'matches'),
+          where('playerId', '==', targetUserId),
+          orderBy('date', 'desc'),
+          limit(10)
+        ),
+        query(
+          collection(db, 'matches'),
+          where('userId', '==', targetUserId),
+          orderBy('date', 'desc'),
+          limit(10)
+        ),
+      ]);
 
       let currentStreak = 0;
       let bestWinStreak = 0;
       let tempStreak = 0;
 
       recentMatches.forEach((match) => {
-        if (match.result && match.result.toLowerCase() === "win") {
+        if (match.result && match.result.toLowerCase() === 'win') {
           tempStreak++;
           if (currentStreak === 0) currentStreak = tempStreak;
           bestWinStreak = Math.max(bestWinStreak, tempStreak);
@@ -100,23 +168,20 @@ import { checkAuthenticationState } from "./auth-utils.js";
         }
       });
 
-      // Calculate improvement rate (simplified - based on recent vs older performance)
       let improvementRate = 0;
       if (recentMatches.length >= 6) {
         const recentWins = recentMatches
           .slice(0, 3)
-          .filter((m) => m.result?.toLowerCase() === "win").length;
+          .filter((m) => m.result?.toLowerCase() === 'win').length;
         const olderWins = recentMatches
           .slice(3, 6)
-          .filter((m) => m.result?.toLowerCase() === "win").length;
+          .filter((m) => m.result?.toLowerCase() === 'win').length;
         if (olderWins > 0) {
-          improvementRate = Math.round(
-            ((recentWins - olderWins) / olderWins) * 100
-          );
+          improvementRate = Math.round(((recentWins - olderWins) / olderWins) * 100);
         }
       }
 
-      console.log("Calculated metrics:", {
+      console.log('Calculated metrics:', {
         trainingSessions,
         matchesPlayed,
         improvementRate,
@@ -132,8 +197,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
         bestWinStreak,
       };
     } catch (error) {
-      console.error("Error calculating metrics:", error);
-      // Return default values on error
+      console.error('Error calculating metrics:', error);
       return {
         trainingSessions: 0,
         matchesPlayed: 0,
@@ -165,25 +229,24 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Populate activities display
   function populateActivities(activities) {
-    const ul = document.getElementById("recentActivitiesList");
+    const ul = document.getElementById('recentActivitiesList');
     if (!ul) {
-      console.warn("Activities list element not found");
+      console.warn('Activities list element not found');
       return;
     }
 
     // Clear existing content
-    ul.innerHTML = "";
+    ul.innerHTML = '';
 
     // Check for empty activities
     if (!activities || activities.length === 0) {
-      const parentSection =
-        ul.closest(".recent-activities-section") || ul.parentElement;
+      const parentSection = ul.closest('.recent-activities-section') || ul.parentElement;
       if (parentSection) {
-        showEmptyState(parentSection.id || "recentActivitiesSection", {
-          icon: "📝",
-          title: "No Recent Activities",
+        showEmptyState(parentSection.id || 'recentActivitiesSection', {
+          icon: '📝',
+          title: 'No Recent Activities',
           message:
-            "Start training or playing matches to see your recent activities here.",
+            'Start training or playing matches to see your recent activities here.',
         });
       }
       return;
@@ -191,14 +254,14 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
     // Populate with activities from Firestore data
     activities.forEach((item, index) => {
-      const li = document.createElement("li");
+      const li = document.createElement('li');
 
-      const title = document.createElement("div");
-      title.className = "activity-title";
+      const title = document.createElement('div');
+      title.className = 'activity-title';
       title.textContent = item.title;
 
-      const time = document.createElement("div");
-      time.className = "activity-time";
+      const time = document.createElement('div');
+      time.className = 'activity-time';
       time.textContent = item.timestamp;
 
       li.appendChild(title);
@@ -211,19 +274,16 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Get recent activities from Firestore
   async function getRecentActivities(currentUserId) {
-    console.log(
-      "Fetching recent activities from Firestore for user:",
-      currentUserId
-    );
+    console.log('Fetching recent activities from Firestore for user:', currentUserId);
 
     try {
       const activities = [];
 
       // Get recent training sessions (last 3)
       const recentTrainingQuery = query(
-        collection(db, "training"),
-        where("playerId", "==", currentUserId),
-        orderBy("date", "desc"),
+        collection(db, 'training'),
+        where('playerId', '==', currentUserId),
+        orderBy('date', 'desc'),
         limit(3)
       );
       const trainingSnapshot = await getDocs(recentTrainingQuery);
@@ -234,23 +294,23 @@ import { checkAuthenticationState } from "./auth-utils.js";
         const daysAgo = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
         let timestamp;
 
-        if (daysAgo === 0) timestamp = "Today";
-        else if (daysAgo === 1) timestamp = "1 day ago";
+        if (daysAgo === 0) timestamp = 'Today';
+        else if (daysAgo === 1) timestamp = '1 day ago';
         else timestamp = `${daysAgo} days ago`;
 
         activities.push({
-          title: `Training Session - ${data.type || "General"}`,
+          title: `Training Session - ${data.type || 'General'}`,
           timestamp: timestamp,
           date: data.date,
-          type: "training",
+          type: 'training',
         });
       });
 
       // Get recent matches (last 2)
       const recentMatchesQuery = query(
-        collection(db, "matches"),
-        where("playerId", "==", currentUserId),
-        orderBy("date", "desc"),
+        collection(db, 'matches'),
+        where('playerId', '==', currentUserId),
+        orderBy('date', 'desc'),
         limit(2)
       );
       const matchesSnapshot = await getDocs(recentMatchesQuery);
@@ -261,45 +321,45 @@ import { checkAuthenticationState } from "./auth-utils.js";
         const daysAgo = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
         let timestamp;
 
-        if (daysAgo === 0) timestamp = "Today";
-        else if (daysAgo === 1) timestamp = "1 day ago";
+        if (daysAgo === 0) timestamp = 'Today';
+        else if (daysAgo === 1) timestamp = '1 day ago';
         else timestamp = `${daysAgo} days ago`;
 
-        const result = data.result || "Completed";
+        const result = data.result || 'Completed';
         activities.push({
           title: `Match vs ${data.opponent} - ${result}`,
           timestamp: timestamp,
           date: data.date,
-          type: "match",
+          type: 'match',
         });
       });
 
       // Sort activities by date (most recent first)
       activities.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      console.log("Fetched recent activities:", activities);
+      console.log('Fetched recent activities:', activities);
       return activities.slice(0, 5); // Return top 5 most recent
     } catch (error) {
-      console.error("Error fetching recent activities:", error);
+      console.error('Error fetching recent activities:', error);
       return [];
     }
   }
 
   // Check for pending coach invitations
   async function checkPendingInvitations() {
-    console.log("Checking for pending coach invitations...");
+    console.log('Checking for pending coach invitations...');
 
     // Get the current user from the auth instance (guaranteed to be authenticated)
     const currentUser = auth.currentUser;
     const userEmail = currentUser.email.toLowerCase();
-    console.log("Checking invitations for email:", userEmail);
+    console.log('Checking invitations for email:', userEmail);
 
     try {
       // 1. Create a query for the database to execute (server-side filtering)
       const invitationsQuery = query(
-        collection(db, "coach_players"),
-        where("playerEmail", "==", userEmail), // Server-side filter
-        where("status", "==", "pending") // Server-side filter
+        collection(db, 'coach_players'),
+        where('playerEmail', '==', userEmail), // Server-side filter
+        where('status', '==', 'pending') // Server-side filter
       );
 
       // 2. Execute the query
@@ -307,7 +367,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
       // 3. Check if any documents were found
       if (querySnapshot.empty) {
-        console.log("No pending invitations found");
+        console.log('No pending invitations found');
         return;
       }
 
@@ -320,27 +380,26 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
         try {
           // Get coach information
-          const coachDoc = await getDoc(doc(db, "users", inviteData.coachId));
+          const coachDoc = await getDoc(doc(db, 'users', inviteData.coachId));
           if (coachDoc.exists()) {
             const coachData = coachDoc.data();
             invitations.push({
               id: inviteDoc.id,
               coachId: inviteData.coachId,
-              coachName:
-                `${coachData.name.first} ${coachData.name.last}`.trim(),
+              coachName: `${coachData.name.first} ${coachData.name.last}`.trim(),
               coachEmail: coachData.email,
               invitedAt: inviteData.invitedAt,
               playerName: inviteData.playerName,
             });
           }
         } catch (error) {
-          console.error("Error fetching coach data:", error);
+          console.error('Error fetching coach data:', error);
           // Still show the invitation even if we can't get coach details
           invitations.push({
             id: inviteDoc.id,
             coachId: inviteData.coachId,
-            coachName: inviteData.coachName || "Unknown Coach", // Use stored coachName if available
-            coachEmail: "unknown@email.com",
+            coachName: inviteData.coachName || 'Unknown Coach', // Use stored coachName if available
+            coachEmail: 'unknown@email.com',
             invitedAt: inviteData.invitedAt,
             playerName: inviteData.playerName,
           });
@@ -351,37 +410,37 @@ import { checkAuthenticationState } from "./auth-utils.js";
         displayInvitationNotifications(invitations);
       }
     } catch (error) {
-      console.error("Error checking pending invitations:", error);
+      console.error('Error checking pending invitations:', error);
 
       // Show error toast if available
-      if (typeof showToast === "function") {
-        showToast("Failed to check for coach invitations", "error");
+      if (typeof showToast === 'function') {
+        showToast('Failed to check for coach invitations', 'error');
       }
     }
   }
 
   // Display invitation notifications
   function displayInvitationNotifications(invitations) {
-    console.log("Displaying invitation notifications:", invitations);
+    console.log('Displaying invitation notifications:', invitations);
 
     // Find a place to insert the notifications (top of main content)
-    const mainContent = document.getElementById("mainContent");
-    const pageTitle = document.querySelector(".page-title");
+    const mainContent = document.getElementById('mainContent');
+    const pageTitle = document.querySelector('.page-title');
 
     if (!mainContent || !pageTitle) {
-      console.error("Could not find elements to display notifications");
+      console.error('Could not find elements to display notifications');
       return;
     }
 
     // Remove any existing notifications
     const existingNotifications = mainContent.querySelectorAll(
-      ".invitation-notification"
+      '.invitation-notification'
     );
     existingNotifications.forEach((notification) => notification.remove());
 
     // Create notification container
-    const notificationContainer = document.createElement("div");
-    notificationContainer.className = "invitation-notifications";
+    const notificationContainer = document.createElement('div');
+    notificationContainer.className = 'invitation-notifications';
     notificationContainer.innerHTML = `
       <style>
         .invitation-notifications {
@@ -503,13 +562,13 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
     // Create notification for each invitation
     invitations.forEach((invitation) => {
-      const notificationDiv = document.createElement("div");
-      notificationDiv.className = "invitation-notification";
+      const notificationDiv = document.createElement('div');
+      notificationDiv.className = 'invitation-notification';
       notificationDiv.dataset.invitationId = invitation.id;
 
       const invitationDate = invitation.invitedAt
         ? new Date(invitation.invitedAt.toDate()).toLocaleDateString()
-        : "Recently";
+        : 'Recently';
 
       notificationDiv.innerHTML = `
         <div class="notification-header">
@@ -538,14 +597,14 @@ import { checkAuthenticationState } from "./auth-utils.js";
     });
 
     // Insert notifications after page title
-    pageTitle.insertAdjacentElement("afterend", notificationContainer);
+    pageTitle.insertAdjacentElement('afterend', notificationContainer);
 
     console.log(`${invitations.length} invitation notification(s) displayed`);
   }
 
   // Accept coach invitation
   async function acceptCoachInvitation(invitationId, coachName) {
-    console.log("Accepting coach invitation:", invitationId);
+    console.log('Accepting coach invitation:', invitationId);
 
     try {
       // Get the notification element and show loading state
@@ -553,55 +612,52 @@ import { checkAuthenticationState } from "./auth-utils.js";
         `[data-invitation-id="${invitationId}"]`
       );
       if (notificationElement) {
-        const acceptBtn = notificationElement.querySelector(".accept-btn");
-        const declineBtn = notificationElement.querySelector(".decline-btn");
+        const acceptBtn = notificationElement.querySelector('.accept-btn');
+        const declineBtn = notificationElement.querySelector('.decline-btn');
 
         if (acceptBtn) {
-          acceptBtn.textContent = "⏳ Accepting...";
-          acceptBtn.classList.add("loading-btn");
+          acceptBtn.textContent = '⏳ Accepting...';
+          acceptBtn.classList.add('loading-btn');
         }
         if (declineBtn) {
           declineBtn.disabled = true;
-          declineBtn.classList.add("loading-btn");
+          declineBtn.classList.add('loading-btn');
         }
       }
 
       // Check authentication
       const authState = await checkAuthenticationState();
       if (!authState.authenticated) {
-        throw new Error("Authentication required");
+        throw new Error('Authentication required');
       }
 
       // Get the invitation document
-      const invitationDoc = await getDoc(
-        doc(db, "coach_players", invitationId)
-      );
+      const invitationDoc = await getDoc(doc(db, 'coach_players', invitationId));
       if (!invitationDoc.exists()) {
-        throw new Error("Invitation not found");
+        throw new Error('Invitation not found');
       }
 
       const invitationData = invitationDoc.data();
 
       // Verify the current user's email matches the invitation
       if (
-        invitationData.playerEmail.toLowerCase() !==
-        authState.user.email.toLowerCase()
+        invitationData.playerEmail.toLowerCase() !== authState.user.email.toLowerCase()
       ) {
-        throw new Error("Invitation email does not match current user");
+        throw new Error('Invitation email does not match current user');
       }
 
       // Use a batched write to update both documents atomically
       const batch = writeBatch(db);
 
       // Update the coach-player relationship
-      batch.update(doc(db, "coach_players", invitationId), {
-        status: "accepted",
+      batch.update(doc(db, 'coach_players', invitationId), {
+        status: 'accepted',
         acceptedAt: new Date(),
         playerId: authState.user.uid, // Now we know the player's ID
       });
 
       // Update the player's user document to add the coach
-      batch.update(doc(db, "users", authState.user.uid), {
+      batch.update(doc(db, 'users', authState.user.uid), {
         coachId: invitationData.coachId,
         updatedAt: new Date(),
       });
@@ -609,21 +665,21 @@ import { checkAuthenticationState } from "./auth-utils.js";
       // Commit the batch
       await batch.commit();
 
-      console.log("Successfully accepted coach invitation");
+      console.log('Successfully accepted coach invitation');
 
       // Remove the notification
       if (notificationElement) {
-        notificationElement.style.animation = "slideInDown 0.3s ease reverse";
+        notificationElement.style.animation = 'slideInDown 0.3s ease reverse';
         setTimeout(() => {
           notificationElement.remove();
 
           // Remove parent container if no more notifications
           const notificationContainer = document.querySelector(
-            ".invitation-notifications"
+            '.invitation-notifications'
           );
           if (
             notificationContainer &&
-            !notificationContainer.querySelector(".invitation-notification")
+            !notificationContainer.querySelector('.invitation-notification')
           ) {
             notificationContainer.remove();
           }
@@ -631,10 +687,10 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }
 
       // Show success message
-      if (typeof showToast === "function") {
+      if (typeof showToast === 'function') {
         showToast(
           `🎉 Successfully joined ${coachName}'s coaching program!`,
-          "success",
+          'success',
           5000
         );
       }
@@ -644,41 +700,41 @@ import { checkAuthenticationState } from "./auth-utils.js";
         window.currentUserData.coachId = invitationData.coachId;
       }
     } catch (error) {
-      console.error("Error accepting coach invitation:", error);
+      console.error('Error accepting coach invitation:', error);
 
       // Restore button states
       const notificationElement = document.querySelector(
         `[data-invitation-id="${invitationId}"]`
       );
       if (notificationElement) {
-        const acceptBtn = notificationElement.querySelector(".accept-btn");
-        const declineBtn = notificationElement.querySelector(".decline-btn");
+        const acceptBtn = notificationElement.querySelector('.accept-btn');
+        const declineBtn = notificationElement.querySelector('.decline-btn');
 
         if (acceptBtn) {
-          acceptBtn.textContent = "✅ Accept Invitation";
-          acceptBtn.classList.remove("loading-btn");
+          acceptBtn.textContent = '✅ Accept Invitation';
+          acceptBtn.classList.remove('loading-btn');
         }
         if (declineBtn) {
           declineBtn.disabled = false;
-          declineBtn.classList.remove("loading-btn");
+          declineBtn.classList.remove('loading-btn');
         }
       }
 
       // Show error message
       const errorMessage =
-        error.message === "Authentication required"
-          ? "Please log in to accept the invitation"
-          : "Failed to accept invitation. Please try again.";
+        error.message === 'Authentication required'
+          ? 'Please log in to accept the invitation'
+          : 'Failed to accept invitation. Please try again.';
 
-      if (typeof showToast === "function") {
-        showToast(errorMessage, "error");
+      if (typeof showToast === 'function') {
+        showToast(errorMessage, 'error');
       }
     }
   }
 
   // Decline coach invitation (optional - for future implementation)
   async function declineCoachInvitation(invitationId, coachName) {
-    console.log("Declining coach invitation:", invitationId);
+    console.log('Declining coach invitation:', invitationId);
 
     try {
       // Get the notification element and show loading state
@@ -686,46 +742,46 @@ import { checkAuthenticationState } from "./auth-utils.js";
         `[data-invitation-id="${invitationId}"]`
       );
       if (notificationElement) {
-        const acceptBtn = notificationElement.querySelector(".accept-btn");
-        const declineBtn = notificationElement.querySelector(".decline-btn");
+        const acceptBtn = notificationElement.querySelector('.accept-btn');
+        const declineBtn = notificationElement.querySelector('.decline-btn');
 
         if (declineBtn) {
-          declineBtn.textContent = "⏳ Declining...";
-          declineBtn.classList.add("loading-btn");
+          declineBtn.textContent = '⏳ Declining...';
+          declineBtn.classList.add('loading-btn');
         }
         if (acceptBtn) {
           acceptBtn.disabled = true;
-          acceptBtn.classList.add("loading-btn");
+          acceptBtn.classList.add('loading-btn');
         }
       }
 
       // Check authentication
       const authState = await checkAuthenticationState();
       if (!authState.authenticated) {
-        throw new Error("Authentication required");
+        throw new Error('Authentication required');
       }
 
       // Update the invitation status to declined
-      await updateDoc(doc(db, "coach_players", invitationId), {
-        status: "declined",
+      await updateDoc(doc(db, 'coach_players', invitationId), {
+        status: 'declined',
         declinedAt: new Date(),
       });
 
-      console.log("Successfully declined coach invitation");
+      console.log('Successfully declined coach invitation');
 
       // Remove the notification
       if (notificationElement) {
-        notificationElement.style.animation = "slideInDown 0.3s ease reverse";
+        notificationElement.style.animation = 'slideInDown 0.3s ease reverse';
         setTimeout(() => {
           notificationElement.remove();
 
           // Remove parent container if no more notifications
           const notificationContainer = document.querySelector(
-            ".invitation-notifications"
+            '.invitation-notifications'
           );
           if (
             notificationContainer &&
-            !notificationContainer.querySelector(".invitation-notification")
+            !notificationContainer.querySelector('.invitation-notification')
           ) {
             notificationContainer.remove();
           }
@@ -733,33 +789,33 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }
 
       // Show info message
-      if (typeof showToast === "function") {
-        showToast(`Declined invitation from ${coachName}`, "info");
+      if (typeof showToast === 'function') {
+        showToast(`Declined invitation from ${coachName}`, 'info');
       }
     } catch (error) {
-      console.error("Error declining coach invitation:", error);
+      console.error('Error declining coach invitation:', error);
 
       // Restore button states
       const notificationElement = document.querySelector(
         `[data-invitation-id="${invitationId}"]`
       );
       if (notificationElement) {
-        const acceptBtn = notificationElement.querySelector(".accept-btn");
-        const declineBtn = notificationElement.querySelector(".decline-btn");
+        const acceptBtn = notificationElement.querySelector('.accept-btn');
+        const declineBtn = notificationElement.querySelector('.decline-btn');
 
         if (declineBtn) {
-          declineBtn.textContent = "❌ Decline";
-          declineBtn.classList.remove("loading-btn");
+          declineBtn.textContent = '❌ Decline';
+          declineBtn.classList.remove('loading-btn');
         }
         if (acceptBtn) {
           acceptBtn.disabled = false;
-          acceptBtn.classList.remove("loading-btn");
+          acceptBtn.classList.remove('loading-btn');
         }
       }
 
       // Show error message
-      if (typeof showToast === "function") {
-        showToast("Failed to decline invitation. Please try again.", "error");
+      if (typeof showToast === 'function') {
+        showToast('Failed to decline invitation. Please try again.', 'error');
       }
     }
   }
@@ -767,69 +823,69 @@ import { checkAuthenticationState } from "./auth-utils.js";
   function setupQuickActions() {
     const actions = [
       {
-        text: "🏃‍♂️ Log Training Session",
+        text: '🏃‍♂️ Log Training Session',
         action: function () {
           if (window.openLogTrainingModal) {
             window.openLogTrainingModal();
           } else {
-            console.warn("openLogTrainingModal function not available");
+            console.warn('openLogTrainingModal function not available');
           }
         },
       },
       {
-        text: "🏆 Record Match",
+        text: '🏆 Record Match',
         action: function () {
           if (window.openRecordMatchModal) {
             window.openRecordMatchModal();
           } else {
-            console.warn("openRecordMatchModal function not available");
+            console.warn('openRecordMatchModal function not available');
           }
         },
       },
       {
-        text: "📅 View Schedule",
+        text: '📅 View Schedule',
         action: function () {
-          console.log("Navigating to Schedule Page");
-          window.location.href = "schedule.html";
+          console.log('Navigating to Schedule Page');
+          window.location.href = 'schedule.html';
         },
       },
       {
-        text: "🎯 Set New Goal",
+        text: '🎯 Set New Goal',
         action: function () {
           if (window.openSetGoalModal) {
             window.openSetGoalModal();
           } else {
-            console.warn("openSetGoalModal function not available");
+            console.warn('openSetGoalModal function not available');
           }
         },
       },
     ];
 
-    const actionsContainer = document.getElementById("quickActionsGrid");
+    const actionsContainer = document.getElementById('quickActionsGrid');
     if (!actionsContainer) {
-      console.warn("Quick Actions Grid container not found");
+      console.warn('Quick Actions Grid container not found');
       return;
     }
 
     // Clear existing buttons
-    actionsContainer.innerHTML = "";
+    actionsContainer.innerHTML = '';
 
     // Create new functional action cards
     actions.forEach((actionData, index) => {
-      const button = document.createElement("button");
-      button.className = "action-card";
-      button.type = "button";
+      const button = document.createElement('button');
+      button.className = 'action-card';
+      button.type = 'button';
       button.textContent = actionData.text;
 
-      button.addEventListener("click", () => {
+      button.addEventListener('click', () => {
         console.log(`Quick action clicked: ${actionData.text}`);
 
         // Add visual feedback
-        button.style.transform = "translateY(-5px) scale(0.98)";
+        button.style.transform = 'translateY(-5px) scale(0.98)';
         setTimeout(() => {
-          button.style.transform = "";
+          button.style.transform = '';
           // Execute the action
-          if (typeof actionData.action === "function") {
+          if (typeof actionData.action === 'function') {
             actionData.action();
           }
         }, 150);
@@ -842,64 +898,67 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   function setupNavigation() {
     const navLinks = {
-      Training: "training.html",
-      Matches: "matches.html",
-      Schedule: "schedule.html",
-      Progress: "progress.html",
-      Achievement: "achievement.html",
-      Goals: "goals.html",
+      Training: 'training.html',
+      Matches: 'matches.html',
+      Schedule: 'schedule.html',
+      Progress: 'progress.html',
+      Achievement: 'achievement.html',
+      Goals: 'goals.html',
     };
 
     Object.entries(navLinks).forEach(([linkText, targetUrl]) => {
       // Find nav links by their text content
-      const navLink = Array.from(document.querySelectorAll(".nav-link")).find(
+      const navLink = Array.from(document.querySelectorAll('.nav-link')).find(
         (link) => link.textContent.trim() === linkText
       );
 
       if (navLink) {
-        navLink.addEventListener("click", (e) => {
+        navLink.addEventListener('click', (e) => {
           e.preventDefault(); // Prevent default link behavior
           console.log(`Navigating to ${targetUrl}`);
 
           // Add visual feedback
-          navLink.style.transform = "translateX(8px)";
+          navLink.style.transform = 'translateX(8px)';
           setTimeout(() => {
-            navLink.style.transform = "";
+            navLink.style.transform = '';
             // Navigate to the target page
             window.location.href = targetUrl;
           }, 200);
         });
-        console.log(
-          `Navigation handler added for: ${linkText} -> ${targetUrl}`
-        );
+        console.log(`Navigation handler added for: ${linkText} -> ${targetUrl}`);
       }
     });
   }
 
   window.loadPlayerDashboard = async function loadPlayerDashboard() {
-    console.log("Loading player dashboard...");
+    console.log('Loading player dashboard...');
 
     // Show loading states for different sections
-    showLocalLoader("metricsGrid", {
-      text: "Loading dashboard metrics...",
-      size: "small",
+    showLocalLoader('metricsGrid', {
+      text: 'Loading dashboard metrics...',
+      size: 'small',
     });
 
-    showLocalLoader("recentActivitiesSection", {
-      text: "Loading recent activities...",
-      size: "small",
+    showLocalLoader('recentActivitiesSection', {
+      text: 'Loading recent activities...',
+      size: 'small',
     });
 
-    showLocalLoader("quickActionsGrid", {
-      text: "Setting up quick actions...",
-      size: "small",
+    showLocalLoader('quickActionsGrid', {
+      text: 'Setting up quick actions...',
+      size: 'small',
     });
 
     try {
       // Check authentication
-      const currentUserId = sessionStorage.getItem("currentUserId");
+      const authState = await checkAuthenticationState();
+      const currentUserId =
+        authState.authenticated && authState.user?.uid
+          ? authState.user.uid
+          : sessionStorage.getItem('currentUserId');
+
       if (!currentUserId) {
-        throw new Error("User not authenticated");
+        throw new Error('User not authenticated');
       }
 
       // Execute all dashboard setup functions with staggered loading
@@ -907,18 +966,18 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
       // Populate header with current date
       const today = new Date();
-      const dateString = today.toLocaleDateString("en-US", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
+      const dateString = today.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       });
       populateHeader({ dateString });
 
       // Load metrics from Firestore
       const metrics = await calculateMetrics(currentUserId);
       populateMetrics(metrics);
-      hideLoadingSpinner("metricsGrid");
+      hideLoadingSpinner('metricsGrid');
 
       // Small delay for better UX
       await simulateNetworkDelay(200);
@@ -926,47 +985,46 @@ import { checkAuthenticationState } from "./auth-utils.js";
       // Load activities from Firestore
       const activities = await getRecentActivities(currentUserId);
       populateActivities(activities);
-      hideLoadingSpinner("recentActivitiesSection");
+      hideLoadingSpinner('recentActivitiesSection');
 
       // Small delay for better UX
       await simulateNetworkDelay(200);
 
       // Load quick actions
       setupQuickActions();
-      hideLoadingSpinner("quickActionsGrid");
+      hideLoadingSpinner('quickActionsGrid');
 
       // Setup navigation (no loading state needed)
       setupNavigation();
 
-      console.log("Player dashboard loaded successfully");
+      console.log('Player dashboard loaded successfully');
     } catch (error) {
-      console.error("Error loading player dashboard:", error);
+      console.error('Error loading player dashboard:', error);
 
       // Hide all loading spinners on error
-      hideLoadingSpinner("metricsGrid");
-      hideLoadingSpinner("recentActivitiesSection");
-      hideLoadingSpinner("quickActionsGrid");
+      hideLoadingSpinner('metricsGrid');
+      hideLoadingSpinner('recentActivitiesSection');
+      hideLoadingSpinner('quickActionsGrid');
 
       // Show error states
-      if (error.message === "User not authenticated") {
+      if (error.message === 'User not authenticated') {
         // Redirect to login
-        window.location.href = "login.html";
+        window.location.href = 'login.html';
         return;
       }
 
-      showEmptyState("metricsGrid", {
-        icon: "⚠️",
-        title: "Failed to Load Metrics",
-        message:
-          "Unable to load dashboard metrics. Please try refreshing the page.",
+      showEmptyState('metricsGrid', {
+        icon: '⚠️',
+        title: 'Failed to Load Metrics',
+        message: 'Unable to load dashboard metrics. Please try refreshing the page.',
       });
     }
   };
 
   // Auto-run on DOM ready
-  document.addEventListener("DOMContentLoaded", function () {
-    if (document.getElementById("metricsGrid")) {
-      console.log("Player dashboard detected, initializing...");
+  document.addEventListener('DOMContentLoaded', function () {
+    if (document.getElementById('metricsGrid')) {
+      console.log('Player dashboard detected, initializing...');
       window.loadPlayerDashboard();
     }
   });

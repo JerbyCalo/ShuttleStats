@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -25,8 +25,9 @@
 
       body {
         margin: 0;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        background: radial-gradient(
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background:
+          radial-gradient(
             1000px 600px at 10% -10%,
             rgba(18, 17, 202, 0.06),
             transparent 60%
@@ -105,7 +106,9 @@
         z-index: 1001;
         opacity: 0;
         visibility: hidden;
-        transition: opacity 0.3s ease, visibility 0.3s ease;
+        transition:
+          opacity 0.3s ease,
+          visibility 0.3s ease;
       }
 
       .sidebar-overlay.active {
@@ -199,60 +202,6 @@
         box-shadow: 0 4px 12px rgba(18, 17, 202, 0.3);
       }
 
-      .sidebar-footer {
-        margin-top: auto;
-        padding-top: 16px;
-        border-top: 1px solid var(--sidebar-hover);
-      }
-
-      .profile {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 12px 16px;
-        border-radius: 8px;
-        background: var(--sidebar-hover);
-        margin-bottom: 12px;
-        transition: background 0.3s ease;
-      }
-
-      .profile:hover {
-        background: #718096;
-      }
-
-      .profile .icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        background: var(--primary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        color: white;
-      }
-
-      .signout-btn {
-        width: 100%;
-        padding: 12px 16px;
-        background: linear-gradient(
-          135deg,
-          var(--primary) 0%,
-          var(--secondary) 100%
-        );
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
-
-      .signout-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(18, 17, 202, 0.4);
-      }
-
       /* Main content */
       .main {
         width: 100%;
@@ -328,6 +277,10 @@
       }
 
       /* User Profile in Header */
+      .user-profile-container {
+        position: relative;
+      }
+
       .user-profile {
         display: flex;
         align-items: center;
@@ -349,6 +302,18 @@
         box-shadow: 0 4px 12px rgba(18, 17, 202, 0.25);
       }
 
+      .user-profile .user-name {
+        font-weight: 600;
+        color: var(--text);
+        transition: color 0.3s ease;
+        font-size: 1rem;
+        pointer-events: none;
+      }
+
+      .user-profile:hover .user-name {
+        color: white;
+      }
+
       .user-profile .user-icon {
         width: 36px;
         height: 36px;
@@ -360,11 +325,90 @@
         font-size: 18px;
         color: white;
         transition: background 0.3s ease;
+        cursor: pointer;
       }
 
       .user-profile:hover .user-icon {
         background: white;
         color: var(--primary);
+      }
+
+      /* Settings Dropdown Menu */
+      .settings-dropdown {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        min-width: 220px;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        z-index: 1000;
+        overflow: hidden;
+      }
+
+      .settings-dropdown.active {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+      }
+
+      .dropdown-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        color: var(--text);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        width: 100%;
+        text-align: left;
+        font-size: 1rem;
+      }
+
+      .dropdown-item:hover {
+        background: var(--bg);
+        color: var(--primary);
+      }
+
+      .dropdown-item:active {
+        background: rgba(18, 17, 202, 0.1);
+      }
+
+      .dropdown-icon {
+        font-size: 1.2rem;
+        width: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .dropdown-text {
+        font-weight: 500;
+        flex: 1;
+      }
+
+      .dropdown-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 4px 0;
+      }
+
+      /* Logout item special styling */
+      .dropdown-item[data-action='logout'] {
+        color: #dc3545;
+      }
+
+      .dropdown-item[data-action='logout']:hover {
+        background: #dc3545;
+        color: white;
       }
 
       /* Two Column Layout */
@@ -764,26 +808,23 @@
     <script src="./js/toast.js" defer></script>
     <script src="./js/loading.js" defer></script>
     <script src="./js/navigation.js" defer></script>
+    <script src="./js/settings-dropdown.js" defer></script>
     <script type="module" src="./js/player-dashboard.js" defer></script>
     <script type="module" src="./js/modals.js" defer></script>
     <script>
       // Set active navigation for this page
-      document.addEventListener("DOMContentLoaded", function () {
+      document.addEventListener('DOMContentLoaded', function () {
         // Find the Dashboard nav link and make it active
-        const dashboardLink = document.querySelector("#navDashboard");
+        const dashboardLink = document.querySelector('#navDashboard');
         if (dashboardLink) {
-          dashboardLink.classList.add("active");
+          dashboardLink.classList.add('active');
         }
       });
     </script>
   </head>
   <body>
     <!-- Hamburger Menu Button -->
-    <button
-      class="hamburger-btn"
-      id="hamburgerBtn"
-      aria-label="Open navigation menu"
-    >
+    <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation menu">
       ☰
     </button>
 
@@ -793,26 +834,19 @@
     <div class="layout">
       <!-- Sidebar Navigation -->
       <aside class="sidebar" id="sidebar" aria-label="Sidebar Navigation">
-        <button
-          class="sidebar-close"
-          id="sidebarClose"
-          aria-label="Close navigation"
-        >
-          &times;
-        </button>
         <div class="brand" id="sidebar-logo">
-          🏸 <span class="logo-shuttle">Shuttle</span
-          ><span class="logo-stats">Stats</span>
+          <span class="logo-icon">🏸</span>
+          <span class="logo-text"
+            ><span class="logo-shuttle">Shuttle</span
+            ><span class="logo-stats">Stats</span></span
+          >
         </div>
         <nav class="sidebar-nav">
           <div class="nav-group">
             <div class="nav-label">Overview</div>
             <ul class="nav-list">
               <li class="nav-item">
-                <a
-                  id="navDashboard"
-                  class="nav-link"
-                  href="player-dashboard.html"
+                <a id="navDashboard" class="nav-link" href="player-dashboard.html"
                   >Dashboard</a
                 >
               </li>
@@ -842,20 +876,42 @@
             </ul>
           </div>
         </nav>
-        <div class="sidebar-footer">
-          <button class="signout-btn" id="signout-btn">Sign Out</button>
-        </div>
+        <!-- Hidden signout button for dropdown to trigger -->
+        <button class="signout-btn" id="signout-btn" style="display: none">
+          Sign Out
+        </button>
       </aside>
 
       <!-- App Header with Logo and User Profile -->
       <header class="app-header">
         <a href="javascript:void(0)" id="main-logo-link" class="app-logo">
-          🏸 <span class="logo-shuttle">Shuttle</span
-          ><span class="logo-stats">Stats</span>
+          <span class="logo-icon">🏸</span>
+          <span class="logo-text"
+            ><span class="logo-shuttle">Shuttle</span
+            ><span class="logo-stats">Stats</span></span
+          >
         </a>
-        <div class="user-profile" id="userProfile" title="Profile & Settings">
-          <span class="user-name">Player</span>
-          <span class="user-icon">⚙️</span>
+        <div class="user-profile-container">
+          <div class="user-profile" id="userProfile" title="Profile & Settings">
+            <span class="user-name">Player</span>
+            <span class="user-icon">⚙️</span>
+          </div>
+          <!-- Settings Dropdown Menu -->
+          <div class="settings-dropdown" id="settingsDropdown">
+            <a href="profile.html" class="dropdown-item" data-action="profile">
+              <span class="dropdown-icon">👤</span>
+              <span class="dropdown-text">Profile</span>
+            </a>
+            <a href="#" class="dropdown-item" data-action="notifications">
+              <span class="dropdown-icon">🔔</span>
+              <span class="dropdown-text">Notifications</span>
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item" data-action="logout">
+              <span class="dropdown-icon">🚪</span>
+              <span class="dropdown-text">Logout</span>
+            </a>
+          </div>
         </div>
       </header>
 
@@ -870,23 +926,23 @@
         <!-- Key Metrics Grid -->
         <section aria-label="Key Metrics" class="metrics" id="metricsGrid">
           <div class="metric-card">
-            <div id="metricTrainingSessions" class="metric-number">3</div>
+            <div id="metricTrainingSessions" class="metric-number">-</div>
             <div class="metric-label">Training Sessions</div>
           </div>
           <div class="metric-card">
-            <div id="metricMatchesPlayed" class="metric-number">4</div>
+            <div id="metricMatchesPlayed" class="metric-number">-</div>
             <div class="metric-label">Matches Played</div>
           </div>
           <div class="metric-card">
-            <div id="metricImprovementRate" class="metric-number">0%</div>
+            <div id="metricImprovementRate" class="metric-number">-</div>
             <div class="metric-label">Improvement Rate</div>
           </div>
           <div class="metric-card">
-            <div id="metricGoalsAchieved" class="metric-number">1</div>
+            <div id="metricGoalsAchieved" class="metric-number">-</div>
             <div class="metric-label">Goals Achieved</div>
           </div>
           <div class="metric-card">
-            <div id="metricBestWinStreak" class="metric-number">2</div>
+            <div id="metricBestWinStreak" class="metric-number">-</div>
             <div class="metric-label">Best Win Streak</div>
           </div>
         </section>
@@ -902,8 +958,8 @@
             <h3 id="recentActivitiesTitle">Recent Activities</h3>
             <ul id="recentActivitiesList" class="activities">
               <li>
-                <div class="activity-title">Training Session - Footwork</div>
-                <div class="activity-time">1 day ago</div>
+                <div class="activity-title">...</div>
+                <div class="activity-time">...</div>
               </li>
             </ul>
           </section>
@@ -912,13 +968,9 @@
           <section class="section" aria-labelledby="quickActionsTitle">
             <h3 id="quickActionsTitle">Quick Actions</h3>
             <div class="quick-actions-grid" id="quickActionsGrid">
-              <button class="action-card" type="button">
-                🏃‍♂️ Log Training Session
-              </button>
+              <button class="action-card" type="button">🏃‍♂️ Log Training Session</button>
               <button class="action-card" type="button">🏆 Record Match</button>
-              <button class="action-card" type="button">
-                📅 View Schedule
-              </button>
+              <button class="action-card" type="button">📅 View Schedule</button>
               <button class="action-card" type="button">🎯 Set New Goal</button>
             </div>
           </section>
@@ -949,9 +1001,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="trainingDuration"
-              >Duration (minutes)</label
-            >
+            <label class="form-label" for="trainingDuration">Duration (minutes)</label>
             <input
               type="number"
               id="trainingDuration"
@@ -966,12 +1016,7 @@
 
           <div class="form-group">
             <label class="form-label" for="trainingType">Training Type</label>
-            <select
-              id="trainingType"
-              name="trainingType"
-              class="form-select"
-              required
-            >
+            <select id="trainingType" name="trainingType" class="form-select" required>
               <option value="">Select training type</option>
               <option value="footwork">Footwork</option>
               <option value="smash">Smash Practice</option>
@@ -986,9 +1031,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="trainingIntensity"
-              >Intensity Level</label
-            >
+            <label class="form-label" for="trainingIntensity">Intensity Level</label>
             <select
               id="trainingIntensity"
               name="trainingIntensity"
@@ -1004,9 +1047,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="trainingNotes"
-              >Notes (optional)</label
-            >
+            <label class="form-label" for="trainingNotes">Notes (optional)</label>
             <textarea
               id="trainingNotes"
               name="trainingNotes"
@@ -1016,9 +1057,7 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary modal-close">
-              Cancel
-            </button>
+            <button type="button" class="btn btn-secondary modal-close">Cancel</button>
             <button type="submit" class="btn btn-primary">Log Session</button>
           </div>
         </form>
@@ -1058,12 +1097,7 @@
 
           <div class="form-group">
             <label class="form-label" for="matchResult">Result</label>
-            <select
-              id="matchResult"
-              name="matchResult"
-              class="form-select"
-              required
-            >
+            <select id="matchResult" name="matchResult" class="form-select" required>
               <option value="">Select result</option>
               <option value="win">Win</option>
               <option value="loss">Loss</option>
@@ -1083,9 +1117,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="matchDuration"
-              >Duration (minutes)</label
-            >
+            <label class="form-label" for="matchDuration">Duration (minutes)</label>
             <input
               type="number"
               id="matchDuration"
@@ -1109,9 +1141,7 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary modal-close">
-              Cancel
-            </button>
+            <button type="button" class="btn btn-secondary modal-close">Cancel</button>
             <button type="submit" class="btn btn-primary">Record Match</button>
           </div>
         </form>
@@ -1151,12 +1181,7 @@
 
           <div class="form-group">
             <label class="form-label" for="goalCategory">Category</label>
-            <select
-              id="goalCategory"
-              name="goalCategory"
-              class="form-select"
-              required
-            >
+            <select id="goalCategory" name="goalCategory" class="form-select" required>
               <option value="">Select category</option>
               <option value="technique">Technique</option>
               <option value="fitness">Fitness</option>
@@ -1168,9 +1193,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="goalTarget"
-              >Target/Measurement</label
-            >
+            <label class="form-label" for="goalTarget">Target/Measurement</label>
             <input
               type="text"
               id="goalTarget"
@@ -1193,9 +1216,7 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="btn btn-secondary modal-close">
-              Cancel
-            </button>
+            <button type="button" class="btn btn-secondary modal-close">Cancel</button>
             <button type="submit" class="btn btn-primary">Set Goal</button>
           </div>
         </form>

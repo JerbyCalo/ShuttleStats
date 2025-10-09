@@ -1,5 +1,5 @@
 // ShuttleStats v2 - Schedule Page Logic
-console.log("schedule.js loaded");
+console.log('schedule.js loaded');
 
 // Import Firebase functions for Schedule operations
 import {
@@ -15,10 +15,10 @@ import {
   query,
   where,
   orderBy,
-} from "../config/firebase-config.js";
+} from '../config/firebase-config.js';
 
 // Import authentication utilities for better role detection
-import { checkAuthenticationState } from "./auth-utils.js";
+import { checkAuthenticationState } from './auth-utils.js';
 
 (function () {
   // Track if we're in coach mode
@@ -27,7 +27,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Current calendar state
   let currentDate = new Date();
-  let currentView = "list"; // 'list' or 'calendar'
+  let currentView = 'list'; // 'list' or 'calendar'
   let selectedDate = null;
 
   // Data cleaning function to prevent undefined values
@@ -35,19 +35,17 @@ import { checkAuthenticationState } from "./auth-utils.js";
     const cleaned = {};
 
     // Clean string fields
-    ["title", "type", "location", "notes", "time"].forEach((field) => {
+    ['title', 'type', 'location', 'notes', 'time'].forEach((field) => {
       cleaned[field] =
-        data[field] && typeof data[field] === "string"
-          ? data[field].trim()
-          : "";
+        data[field] && typeof data[field] === 'string' ? data[field].trim() : '';
     });
 
     // Clean date field
-    cleaned.date = data.date || "";
+    cleaned.date = data.date || '';
 
     // Clean userId field (single user ID string)
     cleaned.userId =
-      data.userId && typeof data.userId === "string" ? data.userId.trim() : "";
+      data.userId && typeof data.userId === 'string' ? data.userId.trim() : '';
 
     // Add required IDs if provided
     if (data.createdBy) cleaned.createdBy = data.createdBy;
@@ -59,19 +57,19 @@ import { checkAuthenticationState } from "./auth-utils.js";
   function formatDate(dateString) {
     const date = new Date(dateString);
     const options = {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     };
-    return date.toLocaleDateString("en-US", options);
+    return date.toLocaleDateString('en-US', options);
   }
 
   // Format time to readable string
   function formatTime(timeString) {
-    const [hours, minutes] = timeString.split(":");
+    const [hours, minutes] = timeString.split(':');
     const hour = parseInt(hours);
-    const ampm = hour >= 12 ? "PM" : "AM";
+    const ampm = hour >= 12 ? 'PM' : 'AM';
     const displayHour = hour % 12 || 12;
     return `${displayHour}:${minutes} ${ampm}`;
   }
@@ -79,37 +77,37 @@ import { checkAuthenticationState } from "./auth-utils.js";
   // Get event type badge class
   function getEventTypeClass(type) {
     switch (type.toLowerCase()) {
-      case "training":
-        return "event-type-training";
-      case "match":
-        return "event-type-match";
-      case "tournament":
-        return "event-type-tournament";
+      case 'training':
+        return 'event-type-training';
+      case 'match':
+        return 'event-type-match';
+      case 'tournament':
+        return 'event-type-tournament';
       default:
-        return "event-type-training";
+        return 'event-type-training';
     }
   }
 
   // Get player name by ID (for coach mode) - Using Firestore data
   async function getPlayerName(playerId) {
     try {
-      const playerDoc = await getDoc(doc(db, "users", playerId));
+      const playerDoc = await getDoc(doc(db, 'users', playerId));
       if (playerDoc.exists()) {
         const playerData = playerDoc.data();
         return `${playerData.name.first} ${playerData.name.last}`.trim();
       } else {
-        return "Unknown Player";
+        return 'Unknown Player';
       }
     } catch (error) {
-      console.error("Error fetching player name:", error);
-      return "Unknown Player";
+      console.error('Error fetching player name:', error);
+      return 'Unknown Player';
     }
   }
 
   // Get participant display text for coach mode (single userId) - Using Firestore data
   async function getParticipantDisplay(userId) {
     if (!userId) {
-      return "No participant assigned";
+      return 'No participant assigned';
     }
 
     return await getPlayerName(userId);
@@ -118,12 +116,12 @@ import { checkAuthenticationState } from "./auth-utils.js";
   // Filter schedule data by player ID (for coach mode)
   async function filterScheduleData(playerId) {
     // AUTHENTICATION GUARD CLAUSE - Check both sources
-    const currentUserId = sessionStorage.getItem("currentUserId");
+    const currentUserId = sessionStorage.getItem('currentUserId');
     if (!window.currentUser && !currentUserId) {
-      console.error("No authenticated user found in filterScheduleData");
+      console.error('No authenticated user found in filterScheduleData');
 
-      if (typeof showToast === "function") {
-        showToast("Authentication required to filter schedule data.", "error");
+      if (typeof showToast === 'function') {
+        showToast('Authentication required to filter schedule data.', 'error');
       }
 
       return [];
@@ -132,26 +130,26 @@ import { checkAuthenticationState } from "./auth-utils.js";
     try {
       let scheduleQuery;
 
-      if (window.currentUserData?.role === "coach") {
-        if (playerId && playerId !== "") {
+      if (window.currentUserData?.role === 'coach') {
+        if (playerId && playerId !== '') {
           // Coach viewing events for specific player (no more "all" option)
           scheduleQuery = query(
-            collection(db, "schedule"),
-            where("createdBy", "==", window.currentUser.uid),
-            where("userId", "==", playerId),
-            orderBy("date", "asc")
+            collection(db, 'schedule'),
+            where('createdBy', '==', window.currentUser.uid),
+            where('userId', '==', playerId),
+            orderBy('date', 'asc')
           );
         } else {
           // If no specific player is provided, return empty array
-          console.log("No player selected, returning empty array");
+          console.log('No player selected, returning empty array');
           return [];
         }
       } else {
         // Player viewing events assigned to them
         scheduleQuery = query(
-          collection(db, "schedule"),
-          where("userId", "==", window.currentUser.uid),
-          orderBy("date", "asc")
+          collection(db, 'schedule'),
+          where('userId', '==', window.currentUser.uid),
+          orderBy('date', 'asc')
         );
       }
 
@@ -164,11 +162,11 @@ import { checkAuthenticationState } from "./auth-utils.js";
       console.log(`Filtered schedule data: ${events.length} events found`);
       return events;
     } catch (error) {
-      console.error("Error filtering schedule data:", error);
+      console.error('Error filtering schedule data:', error);
 
       // Show user-friendly error message
-      if (typeof showToast === "function") {
-        showToast("Error loading schedule data. Please try again.", "error");
+      if (typeof showToast === 'function') {
+        showToast('Error loading schedule data. Please try again.', 'error');
       }
 
       return [];
@@ -193,9 +191,58 @@ import { checkAuthenticationState } from "./auth-utils.js";
     return eventsByDate;
   }
 
+  function getLocalDateKey(dateInstance) {
+    const year = dateInstance.getFullYear();
+    const month = String(dateInstance.getMonth() + 1).padStart(2, '0');
+    const day = String(dateInstance.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  function normalizeScheduleEvents(events = []) {
+    return events.map((event) => {
+      if (!event) {
+        return event;
+      }
+
+      const normalizedEvent = { ...event };
+      const rawDate = event.date;
+
+      if (rawDate) {
+        let dateInstance = null;
+
+        if (typeof rawDate.toDate === 'function') {
+          dateInstance = rawDate.toDate();
+        } else if (rawDate instanceof Date) {
+          dateInstance = rawDate;
+        } else if (typeof rawDate === 'string') {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(rawDate)) {
+            normalizedEvent.date = rawDate;
+            return normalizedEvent;
+          }
+
+          const parsed = new Date(rawDate);
+          if (!Number.isNaN(parsed.getTime())) {
+            dateInstance = parsed;
+          }
+        } else if (typeof rawDate === 'number') {
+          const parsedFromNumber = new Date(rawDate);
+          if (!Number.isNaN(parsedFromNumber.getTime())) {
+            dateInstance = parsedFromNumber;
+          }
+        }
+
+        if (dateInstance) {
+          normalizedEvent.date = getLocalDateKey(dateInstance);
+        }
+      }
+
+      return normalizedEvent;
+    });
+  }
+
   // Format month/year for display
   function formatMonthYear(date) {
-    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }
 
   // Get calendar days for a given month
@@ -227,8 +274,8 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Render calendar grid
   function renderCalendar() {
-    const calendarGrid = document.getElementById("calendarGrid");
-    const currentMonthEl = document.getElementById("currentMonth");
+    const calendarGrid = document.getElementById('calendarGrid');
+    const currentMonthEl = document.getElementById('currentMonth');
 
     if (!calendarGrid || !currentMonthEl) return;
 
@@ -236,13 +283,13 @@ import { checkAuthenticationState } from "./auth-utils.js";
     currentMonthEl.textContent = formatMonthYear(currentDate);
 
     // Clear existing calendar
-    calendarGrid.innerHTML = "";
+    calendarGrid.innerHTML = '';
 
     // Add day headers
-    const dayHeaders = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     dayHeaders.forEach((day) => {
-      const headerEl = document.createElement("div");
-      headerEl.className = "calendar-day-header";
+      const headerEl = document.createElement('div');
+      headerEl.className = 'calendar-day-header';
       headerEl.textContent = day;
       calendarGrid.appendChild(headerEl);
     });
@@ -259,24 +306,24 @@ import { checkAuthenticationState } from "./auth-utils.js";
     const currentMonth = currentDate.getMonth();
 
     calendarDays.forEach((day) => {
-      const dayEl = document.createElement("div");
-      dayEl.className = "calendar-day";
+      const dayEl = document.createElement('div');
+      dayEl.className = 'calendar-day';
 
       const isCurrentMonth = day.getMonth() === currentMonth;
       const isToday = day.toDateString() === today.toDateString();
-      const dateKey = day.toISOString().split("T")[0];
+      const dateKey = getLocalDateKey(day);
       const dayEvents = eventsByDate[dateKey] || [];
 
       if (!isCurrentMonth) {
-        dayEl.classList.add("other-month");
+        dayEl.classList.add('other-month');
       }
 
       if (isToday) {
-        dayEl.classList.add("today");
+        dayEl.classList.add('today');
       }
 
       if (dayEvents.length > 0) {
-        dayEl.classList.add("has-events");
+        dayEl.classList.add('has-events');
       }
 
       dayEl.innerHTML = `
@@ -286,24 +333,22 @@ import { checkAuthenticationState } from "./auth-utils.js";
             .slice(0, 2)
             .map(
               (event) => `
-            <div class="day-event ${event.type.toLowerCase()}" title="${
-                event.title
-              }">
+            <div class="day-event ${event.type.toLowerCase()}" title="${event.title}">
               ${event.title}
             </div>
           `
             )
-            .join("")}
+            .join('')}
           ${
             dayEvents.length > 2
               ? `<div class="event-count">+${dayEvents.length - 2}</div>`
-              : ""
+              : ''
           }
         </div>
       `;
 
       // Add click handler to show day events
-      dayEl.addEventListener("click", () => showDayEvents(day, dayEvents));
+      dayEl.addEventListener('click', () => showDayEvents(day, dayEvents));
 
       calendarGrid.appendChild(dayEl);
     });
@@ -312,24 +357,24 @@ import { checkAuthenticationState } from "./auth-utils.js";
   // Show events for a specific day
   function showDayEvents(date, events) {
     selectedDate = date;
-    const modal = document.getElementById("dayEventsModal");
-    const title = document.getElementById("dayEventsTitle");
-    const eventsList = document.getElementById("dayEventsList");
+    const modal = document.getElementById('dayEventsModal');
+    const title = document.getElementById('dayEventsTitle');
+    const eventsList = document.getElementById('dayEventsList');
 
     if (!modal || !title || !eventsList) return;
 
     // Format date for title
-    const dateStr = date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+    const dateStr = date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     });
 
     title.textContent = `Events for ${dateStr}`;
 
     // Clear and populate events list
-    eventsList.innerHTML = "";
+    eventsList.innerHTML = '';
 
     if (events.length === 0) {
       eventsList.innerHTML = `
@@ -341,19 +386,19 @@ import { checkAuthenticationState } from "./auth-utils.js";
       `;
     } else {
       events.forEach((event) => {
-        const eventEl = document.createElement("div");
-        eventEl.className = "day-event-item";
+        const eventEl = document.createElement('div');
+        eventEl.className = 'day-event-item';
         eventEl.innerHTML = `
           <div class="day-event-header">
             <div>
               <div class="day-event-title">${event.title}</div>
               <div class="day-event-time">${formatTime(event.time)} • ${
-          event.location
-        }</div>
+                event.location
+              }</div>
             </div>
             <div class="day-event-type ${getEventTypeClass(event.type)}">${
-          event.type
-        }</div>
+              event.type
+            }</div>
           </div>
           <div class="day-event-actions">
             <button class="day-event-btn day-event-edit edit-event-btn" data-event-id="${
@@ -378,35 +423,35 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Open day events modal
   function openDayEventsModal() {
-    const modal = document.getElementById("dayEventsModal");
-    const backdrop = document.getElementById("modal-backdrop");
+    const modal = document.getElementById('dayEventsModal');
+    const backdrop = document.getElementById('modal-backdrop');
 
     if (modal && backdrop) {
-      modal.style.display = "block";
-      backdrop.style.display = "block";
+      modal.style.display = 'block';
+      backdrop.style.display = 'block';
 
       setTimeout(() => {
-        backdrop.classList.add("active");
-        modal.classList.add("active");
+        backdrop.classList.add('active');
+        modal.classList.add('active');
       }, 10);
 
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     }
   }
 
   // Close day events modal
   function closeDayEventsModal() {
-    const modal = document.getElementById("dayEventsModal");
-    const backdrop = document.getElementById("modal-backdrop");
+    const modal = document.getElementById('dayEventsModal');
+    const backdrop = document.getElementById('modal-backdrop');
 
     if (modal && backdrop) {
-      backdrop.classList.remove("active");
-      modal.classList.remove("active");
+      backdrop.classList.remove('active');
+      modal.classList.remove('active');
 
       setTimeout(() => {
-        modal.style.display = "none";
-        backdrop.style.display = "none";
-        document.body.style.overflow = "";
+        modal.style.display = 'none';
+        backdrop.style.display = 'none';
+        document.body.style.overflow = '';
       }, 300);
     }
   }
@@ -415,23 +460,23 @@ import { checkAuthenticationState } from "./auth-utils.js";
   function switchView(view) {
     currentView = view;
 
-    const listView = document.getElementById("listView");
-    const calendarView = document.getElementById("calendarView");
-    const listBtn = document.getElementById("listViewBtn");
-    const calendarBtn = document.getElementById("calendarViewBtn");
+    const listView = document.getElementById('listView');
+    const calendarView = document.getElementById('calendarView');
+    const listBtn = document.getElementById('listViewBtn');
+    const calendarBtn = document.getElementById('calendarViewBtn');
 
-    if (view === "list") {
+    if (view === 'list') {
       // Show list view, hide calendar view
-      listView.classList.add("active");
-      calendarView.classList.remove("active");
-      listBtn.classList.add("active");
-      calendarBtn.classList.remove("active");
+      listView.classList.add('active');
+      calendarView.classList.remove('active');
+      listBtn.classList.add('active');
+      calendarBtn.classList.remove('active');
     } else {
       // Show calendar view, hide list view
-      listView.classList.remove("active");
-      calendarView.classList.add("active");
-      listBtn.classList.remove("active");
-      calendarBtn.classList.add("active");
+      listView.classList.remove('active');
+      calendarView.classList.add('active');
+      listBtn.classList.remove('active');
+      calendarBtn.classList.add('active');
       renderCalendar();
     }
 
@@ -440,23 +485,23 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Initialize view state
   function initializeViewState() {
-    const listView = document.getElementById("listView");
-    const calendarView = document.getElementById("calendarView");
-    const listBtn = document.getElementById("listViewBtn");
-    const calendarBtn = document.getElementById("calendarViewBtn");
+    const listView = document.getElementById('listView');
+    const calendarView = document.getElementById('calendarView');
+    const listBtn = document.getElementById('listViewBtn');
+    const calendarBtn = document.getElementById('calendarViewBtn');
 
     // Ensure list view is active by default and calendar view is hidden
-    if (listView) listView.classList.add("active");
-    if (calendarView) calendarView.classList.remove("active");
-    if (listBtn) listBtn.classList.add("active");
-    if (calendarBtn) calendarBtn.classList.remove("active");
+    if (listView) listView.classList.add('active');
+    if (calendarView) calendarView.classList.remove('active');
+    if (listBtn) listBtn.classList.add('active');
+    if (calendarBtn) calendarBtn.classList.remove('active');
 
-    console.log("Initial view state set to list view");
+    console.log('Initial view state set to list view');
   }
 
   // Navigate calendar months
   function navigateMonth(direction) {
-    if (direction === "prev") {
+    if (direction === 'prev') {
       currentDate.setMonth(currentDate.getMonth() - 1);
     } else {
       currentDate.setMonth(currentDate.getMonth() + 1);
@@ -466,8 +511,8 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Create schedule event card
   function createEventCard(event) {
-    const card = document.createElement("div");
-    card.className = "event-card";
+    const card = document.createElement('div');
+    card.className = 'event-card';
     card.dataset.eventId = event.id;
 
     // For coach mode, add participant info to the header
@@ -476,7 +521,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
         ? `<div class="participant-info" style="color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">
         � ${getParticipantDisplay(event.userId)}
        </div>`
-        : "";
+        : '';
 
     card.innerHTML = `
       ${participantInfo}
@@ -486,9 +531,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
           <div class="date-sub">${formatTime(event.time)}</div>
         </div>
         <div class="event-type">
-          <span class="type-badge ${getEventTypeClass(event.type)}">${
-      event.type
-    }</span>
+          <span class="type-badge ${getEventTypeClass(event.type)}">${event.type}</span>
         </div>
       </div>
       
@@ -529,16 +572,14 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Update schedule statistics (works with filtered data in coach mode)
   function updateScheduleStats() {
-    const totalEventsEl = document.getElementById("totalEvents");
-    const upcomingEventsEl = document.getElementById("upcomingEvents");
+    const totalEventsEl = document.getElementById('totalEvents');
+    const upcomingEventsEl = document.getElementById('upcomingEvents');
 
-    const dataToUse = isCoachMode
-      ? currentFilteredData
-      : window.mockScheduleData;
+    const dataToUse = isCoachMode ? currentFilteredData : window.mockScheduleData;
 
     if (!dataToUse || dataToUse.length === 0) {
-      if (totalEventsEl) totalEventsEl.textContent = "0";
-      if (upcomingEventsEl) upcomingEventsEl.textContent = "0";
+      if (totalEventsEl) totalEventsEl.textContent = '0';
+      if (upcomingEventsEl) upcomingEventsEl.textContent = '0';
       return;
     }
 
@@ -556,105 +597,98 @@ import { checkAuthenticationState } from "./auth-utils.js";
     if (totalEventsEl) totalEventsEl.textContent = totalEvents;
     if (upcomingEventsEl) upcomingEventsEl.textContent = upcomingEvents;
 
-    console.log(
-      `Stats updated: ${totalEvents} total events, ${upcomingEvents} upcoming`
-    );
+    console.log(`Stats updated: ${totalEvents} total events, ${upcomingEvents} upcoming`);
   }
 
   // Render all schedule events (works with filtered data in coach mode)
   // Render all schedule events (works with filtered data in coach mode)
   async function renderScheduleEvents(eventsData = null) {
+    // Patched by AI assistant to format event data for calendar view.
     // DEBUGGING: Log the entire authentication process
-    console.log("=== RENDER SCHEDULE EVENTS DEBUG START ===");
+    console.log('=== RENDER SCHEDULE EVENTS DEBUG START ===');
+    console.log('renderScheduleEvents function called at:', new Date().toISOString());
     console.log(
-      "renderScheduleEvents function called at:",
-      new Date().toISOString()
-    );
-    console.log(
-      "Called with eventsData parameter:",
-      eventsData !== null ? "provided" : "null"
+      'Called with eventsData parameter:',
+      eventsData !== null ? 'provided' : 'null'
     );
 
     // Check sessionStorage state
-    const currentUserId = sessionStorage.getItem("currentUserId");
-    console.log("CurrentUserId from sessionStorage:", currentUserId);
+    const currentUserId = sessionStorage.getItem('currentUserId');
+    console.log('CurrentUserId from sessionStorage:', currentUserId);
 
     // Check window authentication state
-    console.log("window.currentUser:", window.currentUser);
-    console.log("window.currentUserData:", window.currentUserData);
+    console.log('window.currentUser:', window.currentUser);
+    console.log('window.currentUserData:', window.currentUserData);
 
     // Log the full sessionStorage contents
-    console.log("Full sessionStorage dump:");
+    console.log('Full sessionStorage dump:');
     for (let i = 0; i < sessionStorage.length; i++) {
       const key = sessionStorage.key(i);
       console.log(`  ${key}: ${sessionStorage.getItem(key)}`);
     }
 
     // Check if DOM is ready
-    console.log("Document readyState:", document.readyState);
+    console.log('Document readyState:', document.readyState);
 
     // Log call stack information
-    console.log("Function called from:", new Error().stack);
+    console.log('Function called from:', new Error().stack);
 
     // AUTHENTICATION GUARD CLAUSE - Check authentication before doing anything
     if (!currentUserId) {
-      console.error("=== AUTHENTICATION FAILURE ===");
-      console.error("No authenticated user found in renderScheduleEvents.");
+      console.error('=== AUTHENTICATION FAILURE ===');
+      console.error('No authenticated user found in renderScheduleEvents.');
       console.error(
-        "This suggests the function was called before authentication setup completed."
+        'This suggests the function was called before authentication setup completed.'
       );
       console.error(
-        "Check the call stack above to see which function triggered this call."
+        'Check the call stack above to see which function triggered this call.'
       );
-      console.log("=== RENDER SCHEDULE EVENTS DEBUG END (FAILED) ===");
+      console.log('=== RENDER SCHEDULE EVENTS DEBUG END (FAILED) ===');
 
-      const container = document.getElementById("scheduleEventsContainer");
+      const container = document.getElementById('scheduleEventsContainer');
       if (container) {
-        showEmptyState("scheduleEventsContainer", {
-          icon: "🔒",
-          title: "Authentication Required",
-          message: "Please log in to view the schedule.",
-          actionText: "Go to Login",
+        showEmptyState('scheduleEventsContainer', {
+          icon: '🔒',
+          title: 'Authentication Required',
+          message: 'Please log in to view the schedule.',
+          actionText: 'Go to Login',
           onAction: () => {
-            window.location.href = "index.html";
+            window.location.href = 'index.html';
           },
         });
       }
 
       // Show toast message as well
-      if (typeof showToast === "function") {
-        showToast("Please log in to view the schedule.", "error");
+      if (typeof showToast === 'function') {
+        showToast('Please log in to view the schedule.', 'error');
       }
 
       return; // Stop execution if no user is found
     }
 
-    console.log("=== AUTHENTICATION SUCCESS ===");
-    console.log("Proceeding with renderScheduleEvents...");
+    console.log('=== AUTHENTICATION SUCCESS ===');
+    console.log('Proceeding with renderScheduleEvents...');
 
     // DATA VALIDATION GUARD CLAUSE - Handle null or invalid data
-    console.log("=== DATA VALIDATION CHECK ===");
-    console.log("eventsData type:", typeof eventsData);
-    console.log("eventsData value:", eventsData);
-    console.log("Is eventsData an array?", Array.isArray(eventsData));
+    console.log('=== DATA VALIDATION CHECK ===');
+    console.log('eventsData type:', typeof eventsData);
+    console.log('eventsData value:', eventsData);
+    console.log('Is eventsData an array?', Array.isArray(eventsData));
 
     // If eventsData is explicitly null, we'll handle it in the data fetching logic below
     // But if it's provided and not an array, that's an error
     if (eventsData !== null && !Array.isArray(eventsData)) {
-      console.error("=== DATA VALIDATION FAILURE ===");
-      console.error(
-        "Invalid events data provided (not null and not array):",
-        eventsData
-      );
-      console.log("=== RENDER SCHEDULE EVENTS DEBUG END (DATA INVALID) ===");
+      console.error('=== DATA VALIDATION FAILURE ===');
+      console.error('Invalid events data provided (not null and not array):', eventsData);
+      console.log('=== RENDER SCHEDULE EVENTS DEBUG END (DATA INVALID) ===');
 
-      const container = document.getElementById("scheduleEventsContainer");
+      const container = document.getElementById('scheduleEventsContainer');
       if (container) {
-        showEmptyState("scheduleEventsContainer", {
-          icon: "⚠️",
-          title: "Data Error",
-          message: "Invalid schedule data format. Please refresh the page.",
-          actionText: "Refresh Page",
+        showEmptyState('scheduleEventsContainer', {
+          icon: '⚠️',
+          title: 'Data Error',
+          message: 'Invalid schedule data format. Please refresh the page.',
+          actionText: 'Refresh Page',
           onAction: () => {
             window.location.reload();
           },
@@ -664,20 +698,20 @@ import { checkAuthenticationState } from "./auth-utils.js";
       return; // Stop execution if data format is invalid
     }
 
-    console.log("=== DATA VALIDATION SUCCESS ===");
-    console.log("Data format is valid, proceeding...");
+    console.log('=== DATA VALIDATION SUCCESS ===');
+    console.log('Data format is valid, proceeding...');
 
-    const container = document.getElementById("scheduleEventsContainer");
+    const container = document.getElementById('scheduleEventsContainer');
 
     if (!container) {
-      console.error("Schedule events container not found");
+      console.error('Schedule events container not found');
       return;
     }
 
     // Show loading spinner
-    showLocalLoader("scheduleEventsContainer", {
-      text: "Loading schedule events...",
-      size: "normal",
+    showLocalLoader('scheduleEventsContainer', {
+      text: 'Loading schedule events...',
+      size: 'normal',
     });
 
     try {
@@ -685,46 +719,44 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
       // If specific data is provided, use it
       if (eventsData !== null) {
-        console.log("=== USING PROVIDED EVENTS DATA ===");
+        console.log('=== USING PROVIDED EVENTS DATA ===');
         dataToRender = eventsData;
       } else {
-        console.log("=== FETCHING DATA FROM FIRESTORE ===");
+        console.log('=== FETCHING DATA FROM FIRESTORE ===');
 
         // Get comprehensive auth state
         const authState = await checkAuthenticationState();
         if (!authState.authenticated) {
-          console.error("No authenticated user found");
-          showEmptyState("scheduleContainer", {
-            icon: "🔒",
-            title: "Authentication Required",
-            message: "Please log in to view your schedule.",
-            actionText: "Go to Login",
+          console.error('No authenticated user found');
+          showEmptyState('scheduleContainer', {
+            icon: '🔒',
+            title: 'Authentication Required',
+            message: 'Please log in to view your schedule.',
+            actionText: 'Go to Login',
             onAction: () => {
-              window.location.href = "login.html";
+              window.location.href = 'login.html';
             },
           });
           return;
         }
 
         const currentUserId = authState.user.uid;
-        const userRole = authState.userData?.role || "player";
+        const userRole = authState.userData?.role || 'player';
 
-        console.log("Using user ID:", currentUserId);
-        console.log("User role:", userRole);
+        console.log('Using user ID:', currentUserId);
+        console.log('User role:', userRole);
 
         if (isCoachMode) {
           // Coach mode: Use current filtered data or fetch all created by coach
-          console.log(
-            "Coach mode: using filtered data or fetching coach events"
-          );
+          console.log('Coach mode: using filtered data or fetching coach events');
           if (currentFilteredData.length > 0) {
             dataToRender = currentFilteredData;
           } else {
             // Fetch all events created by this coach
             const coachQuery = query(
-              collection(db, "schedule"),
-              where("createdBy", "==", currentUserId),
-              orderBy("date", "asc")
+              collection(db, 'schedule'),
+              where('createdBy', '==', currentUserId),
+              orderBy('date', 'asc')
             );
             const coachSnapshot = await getDocs(coachQuery);
             dataToRender = coachSnapshot.docs.map((doc) => ({
@@ -733,12 +765,12 @@ import { checkAuthenticationState } from "./auth-utils.js";
             }));
           }
         } else {
-          console.log("Player mode: fetching events assigned to player");
+          console.log('Player mode: fetching events assigned to player');
           // Player mode: Fetch events where userId matches current user
           const scheduleQuery = query(
-            collection(db, "schedule"),
-            where("userId", "==", currentUserId),
-            orderBy("date", "asc")
+            collection(db, 'schedule'),
+            where('userId', '==', currentUserId),
+            orderBy('date', 'asc')
           );
 
           const querySnapshot = await getDocs(scheduleQuery);
@@ -751,37 +783,44 @@ import { checkAuthenticationState } from "./auth-utils.js";
         }
       }
 
+      const normalizedEvents = normalizeScheduleEvents(dataToRender || []);
+
+      currentFilteredData = normalizedEvents;
+      if (!isCoachMode) {
+        window.mockScheduleData = normalizedEvents;
+      }
+
       // Clear existing content after loading
-      container.innerHTML = "";
+      container.innerHTML = '';
 
       // Hide loading spinner
-      hideLoadingSpinner("scheduleEventsContainer");
+      hideLoadingSpinner('scheduleEventsContainer');
 
       // Check if we have schedule data
-      console.log("=== CHECKING DATA TO RENDER ===");
-      console.log("dataToRender:", dataToRender);
+      console.log('=== CHECKING DATA TO RENDER ===');
+      console.log('dataToRender:', normalizedEvents);
       console.log(
-        "dataToRender length:",
-        dataToRender ? dataToRender.length : "N/A"
+        'dataToRender length:',
+        normalizedEvents ? normalizedEvents.length : 'N/A'
       );
 
-      if (!dataToRender || dataToRender.length === 0) {
-        console.log("=== NO DATA TO RENDER - SHOWING EMPTY STATE ===");
-        const emptyMessage = isCoachMode ? "" : "";
+      if (!normalizedEvents || normalizedEvents.length === 0) {
+        console.log('=== NO DATA TO RENDER - SHOWING EMPTY STATE ===');
+        const emptyMessage = isCoachMode ? '' : '';
 
-        showEmptyState("scheduleEventsContainer", {
-          icon: "📅",
-          title: "No Events Scheduled",
+        showEmptyState('scheduleEventsContainer', {
+          icon: '📅',
+          title: 'No Events Scheduled',
           message: emptyMessage,
         });
 
-        updateScheduleStats(dataToRender);
-        console.log("=== RENDER SCHEDULE EVENTS DEBUG END (NO DATA) ===");
+        updateScheduleStats(normalizedEvents);
+        console.log('=== RENDER SCHEDULE EVENTS DEBUG END (NO DATA) ===');
         return;
       }
 
       // Sort events by date (newest first)
-      const sortedEvents = [...dataToRender].sort((a, b) => {
+      const sortedEvents = [...normalizedEvents].sort((a, b) => {
         return new Date(b.date) - new Date(a.date);
       });
 
@@ -795,30 +834,30 @@ import { checkAuthenticationState } from "./auth-utils.js";
       updateScheduleStats(sortedEvents);
 
       console.log(`Rendered ${sortedEvents.length} schedule events`);
-      console.log("=== RENDER SCHEDULE EVENTS DEBUG END (SUCCESS) ===");
+      console.log('=== RENDER SCHEDULE EVENTS DEBUG END (SUCCESS) ===');
     } catch (error) {
-      console.error("Error rendering schedule events:", error);
-      hideLoadingSpinner("scheduleEventsContainer");
+      console.error('Error rendering schedule events:', error);
+      hideLoadingSpinner('scheduleEventsContainer');
 
       // Show user-friendly error message
       let errorMessage =
-        "Unable to load schedule events. Please try refreshing the page.";
-      if (error.message.includes("requires an index")) {
+        'Unable to load schedule events. Please try refreshing the page.';
+      if (error.message.includes('requires an index')) {
         errorMessage =
-          "Database indexes are being created. Please try again in a few minutes.";
+          'Database indexes are being created. Please try again in a few minutes.';
       }
 
-      showEmptyState("scheduleEventsContainer", {
-        icon: "⚠️",
-        title: "Error Loading Events",
+      showEmptyState('scheduleEventsContainer', {
+        icon: '⚠️',
+        title: 'Error Loading Events',
         message: errorMessage,
         retry: () => renderScheduleEvents(eventsData),
       });
 
-      if (typeof showToast === "function") {
+      if (typeof showToast === 'function') {
         showToast(
-          "Error loading schedule events. Please check your connection.",
-          "error"
+          'Error loading schedule events. Please check your connection.',
+          'error'
         );
       }
     }
@@ -826,14 +865,14 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Update schedule statistics (works with filtered data in coach mode)
   function updateScheduleStats(eventsData = null) {
-    const totalEventsEl = document.getElementById("totalEvents");
-    const upcomingEventsEl = document.getElementById("upcomingEvents");
+    const totalEventsEl = document.getElementById('totalEvents');
+    const upcomingEventsEl = document.getElementById('upcomingEvents');
 
     const dataToUse = eventsData || currentFilteredData || [];
 
     if (!dataToUse || dataToUse.length === 0) {
-      if (totalEventsEl) totalEventsEl.textContent = "0";
-      if (upcomingEventsEl) upcomingEventsEl.textContent = "0";
+      if (totalEventsEl) totalEventsEl.textContent = '0';
+      if (upcomingEventsEl) upcomingEventsEl.textContent = '0';
       return;
     }
 
@@ -851,9 +890,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
     if (totalEventsEl) totalEventsEl.textContent = totalEvents;
     if (upcomingEventsEl) upcomingEventsEl.textContent = upcomingEvents;
 
-    console.log(
-      `Stats updated: ${totalEvents} total events, ${upcomingEvents} upcoming`
-    );
+    console.log(`Stats updated: ${totalEvents} total events, ${upcomingEvents} upcoming`);
   }
 
   // Create and inject player filter dropdown (coach mode only) - Using Firestore data
@@ -863,24 +900,24 @@ import { checkAuthenticationState } from "./auth-utils.js";
     }
 
     // Check authentication first
-    const currentUserId = sessionStorage.getItem("currentUserId");
+    const currentUserId = sessionStorage.getItem('currentUserId');
     if (!currentUserId) {
-      console.warn("No authenticated user for player filter dropdown");
+      console.warn('No authenticated user for player filter dropdown');
       return;
     }
 
     try {
       // Fetch coach's players from Firestore
       const relationshipsQuery = query(
-        collection(db, "coach_players"),
-        where("coachId", "==", currentUserId),
-        where("status", "==", "accepted")
+        collection(db, 'coach_players'),
+        where('coachId', '==', currentUserId),
+        where('status', '==', 'accepted')
       );
 
       const relationshipsSnapshot = await getDocs(relationshipsQuery);
 
       if (relationshipsSnapshot.empty) {
-        console.log("No players found for coach, skipping filter dropdown");
+        console.log('No players found for coach, skipping filter dropdown');
         return;
       }
 
@@ -890,9 +927,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
         const relationship = relationshipDoc.data();
 
         try {
-          const playerDoc = await getDoc(
-            doc(db, "users", relationship.playerId)
-          );
+          const playerDoc = await getDoc(doc(db, 'users', relationship.playerId));
           if (playerDoc.exists()) {
             const playerData = playerDoc.data();
             playersData.push({
@@ -901,17 +936,17 @@ import { checkAuthenticationState } from "./auth-utils.js";
             });
           }
         } catch (error) {
-          console.error("Error fetching player for dropdown:", error);
+          console.error('Error fetching player for dropdown:', error);
         }
       }
 
       if (playersData.length === 0) {
-        console.log("No valid players found for filter dropdown");
+        console.log('No valid players found for filter dropdown');
         return;
       }
 
       // Create dropdown container
-      const filterContainer = document.createElement("div");
+      const filterContainer = document.createElement('div');
       filterContainer.style.cssText = `
         margin: 20px 0;
         padding: 20px;
@@ -922,9 +957,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
       `;
 
       // Create label
-      const label = document.createElement("label");
-      label.htmlFor = "playerFilterDropdown";
-      label.textContent = "Filter by Player:";
+      const label = document.createElement('label');
+      label.htmlFor = 'playerFilterDropdown';
+      label.textContent = 'Filter by Player:';
       label.style.cssText = `
         display: block;
         margin-bottom: 8px;
@@ -934,9 +969,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
       `;
 
       // Create dropdown
-      const dropdown = document.createElement("select");
-      dropdown.id = "playerFilterDropdown";
-      dropdown.className = "form-control";
+      const dropdown = document.createElement('select');
+      dropdown.id = 'playerFilterDropdown';
+      dropdown.className = 'form-control';
       dropdown.style.cssText = `
         width: 100%;
         max-width: 300px;
@@ -951,12 +986,12 @@ import { checkAuthenticationState } from "./auth-utils.js";
       `;
 
       // Clear existing options (REMOVE "All Players" option)
-      dropdown.innerHTML = "";
+      dropdown.innerHTML = '';
 
       // Add player options (sorted by name) - NO "All Players" option
       playersData.sort((a, b) => a.name.localeCompare(b.name));
       playersData.forEach((player) => {
-        const option = document.createElement("option");
+        const option = document.createElement('option');
         option.value = player.id;
         option.textContent = player.name;
         dropdown.appendChild(option);
@@ -969,40 +1004,35 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }
 
       // Add event listener for filtering
-      dropdown.addEventListener("change", async function () {
+      dropdown.addEventListener('change', async function () {
         const selectedPlayerId = this.value;
-        console.log("=== DROPDOWN FILTER CHANGE EVENT ===");
+        console.log('=== DROPDOWN FILTER CHANGE EVENT ===');
         console.log(`Filtering schedule data for player: ${selectedPlayerId}`);
-        console.log(
-          "Dropdown change event triggered at:",
-          new Date().toISOString()
-        );
+        console.log('Dropdown change event triggered at:', new Date().toISOString());
 
         // Show loading while filtering
-        showLocalLoader("scheduleEventsContainer", {
-          text: "Filtering events...",
-          size: "small",
+        showLocalLoader('scheduleEventsContainer', {
+          text: 'Filtering events...',
+          size: 'small',
         });
 
         try {
           // Filter the data from Firestore
-          console.log("About to call filterScheduleData...");
+          console.log('About to call filterScheduleData...');
           currentFilteredData = await filterScheduleData(selectedPlayerId);
 
           // Re-render both list and calendar views with filtered data
-          console.log(
-            "About to call renderScheduleEvents from dropdown change..."
-          );
+          console.log('About to call renderScheduleEvents from dropdown change...');
           await renderScheduleEvents();
-          if (currentView === "calendar") {
+          if (currentView === 'calendar') {
             renderCalendar();
           }
         } catch (error) {
-          console.error("Error filtering schedule data:", error);
-          hideLoadingSpinner("scheduleEventsContainer");
+          console.error('Error filtering schedule data:', error);
+          hideLoadingSpinner('scheduleEventsContainer');
 
-          if (typeof showToast === "function") {
-            showToast("Error filtering events. Please try again.", "error");
+          if (typeof showToast === 'function') {
+            showToast('Error filtering events. Please try again.', 'error');
           }
         }
       });
@@ -1012,64 +1042,59 @@ import { checkAuthenticationState } from "./auth-utils.js";
       filterContainer.appendChild(dropdown);
 
       // Find the action bar and insert the filter before it
-      const actionBar = document.querySelector(".action-bar");
+      const actionBar = document.querySelector('.action-bar');
       if (actionBar && actionBar.parentNode) {
         actionBar.parentNode.insertBefore(filterContainer, actionBar);
       }
 
       // Trigger initial change event to load first player's data
       setTimeout(() => {
-        console.log("=== TRIGGERING INITIAL DROPDOWN CHANGE EVENT ===");
+        console.log('=== TRIGGERING INITIAL DROPDOWN CHANGE EVENT ===');
+        console.log('Auto-triggering dropdown change at:', new Date().toISOString());
+        console.log('Current authentication state before auto-trigger:');
         console.log(
-          "Auto-triggering dropdown change at:",
-          new Date().toISOString()
+          '  sessionStorage currentUserId:',
+          sessionStorage.getItem('currentUserId')
         );
-        console.log("Current authentication state before auto-trigger:");
-        console.log(
-          "  sessionStorage currentUserId:",
-          sessionStorage.getItem("currentUserId")
-        );
-        console.log("  window.currentUser:", window.currentUser);
-        dropdown.dispatchEvent(new Event("change"));
+        console.log('  window.currentUser:', window.currentUser);
+        dropdown.dispatchEvent(new Event('change'));
       }, 100);
 
-      console.log(
-        "Player filter dropdown created and initialized with real data"
-      );
+      console.log('Player filter dropdown created and initialized with real data');
     } catch (error) {
-      console.error("Error creating player filter dropdown:", error);
+      console.error('Error creating player filter dropdown:', error);
     }
   }
 
   // Set up coach mode UI transformations
   function setupCoachMode() {
-    console.log("Setting up coach mode UI...");
+    console.log('Setting up coach mode UI...');
 
     // Update page title
-    const pageTitle = document.querySelector(".page-title h1");
+    const pageTitle = document.querySelector('.page-title h1');
     if (pageTitle) {
-      pageTitle.textContent = "My Schedule";
+      pageTitle.textContent = 'My Schedule';
     }
 
     // Update subheading
-    const subheading = document.querySelector(".page-title .subheading");
+    const subheading = document.querySelector('.page-title .subheading');
     if (subheading) {
-      subheading.textContent = "Manage your coaching schedule and events";
+      subheading.textContent = 'Manage your coaching schedule and events';
     }
 
     // DO NOT create player filter dropdown for schedule - coach manages their own events
     // createPlayerFilterDropdown(); // REMOVED
 
-    console.log("Coach mode UI setup complete (no player filter for schedule)");
+    console.log('Coach mode UI setup complete (no player filter for schedule)');
   }
 
   // Set up "Add New Event" button
   function setupAddEventButton() {
-    const addButton = document.getElementById("addEventBtn");
+    const addButton = document.getElementById('addEventBtn');
 
     if (addButton) {
-      addButton.addEventListener("click", function () {
-        console.log("Opening event modal");
+      addButton.addEventListener('click', function () {
+        console.log('Opening event modal');
 
         // Clear any selected date when adding from main button
         selectedDate = null;
@@ -1078,51 +1103,51 @@ import { checkAuthenticationState } from "./auth-utils.js";
         if (window.openAddEventModal) {
           window.openAddEventModal();
         } else {
-          console.warn("Event modal function not available");
-          alert("Event modal will be available when modals.js is loaded");
+          console.warn('Event modal function not available');
+          alert('Event modal will be available when modals.js is loaded');
         }
       });
 
-      console.log("Add event button set up");
+      console.log('Add event button set up');
     } else {
-      console.warn("Add event button not found");
+      console.warn('Add event button not found');
     }
   }
 
   // Set up view toggle buttons
   function setupViewToggle() {
-    const listViewBtn = document.getElementById("listViewBtn");
-    const calendarViewBtn = document.getElementById("calendarViewBtn");
+    const listViewBtn = document.getElementById('listViewBtn');
+    const calendarViewBtn = document.getElementById('calendarViewBtn');
 
     if (listViewBtn) {
-      listViewBtn.addEventListener("click", () => switchView("list"));
+      listViewBtn.addEventListener('click', () => switchView('list'));
     }
 
     if (calendarViewBtn) {
-      calendarViewBtn.addEventListener("click", () => switchView("calendar"));
+      calendarViewBtn.addEventListener('click', () => switchView('calendar'));
     }
   }
 
   // Set up calendar navigation
   function setupCalendarNavigation() {
-    const prevBtn = document.getElementById("prevMonthBtn");
-    const nextBtn = document.getElementById("nextMonthBtn");
+    const prevBtn = document.getElementById('prevMonthBtn');
+    const nextBtn = document.getElementById('nextMonthBtn');
 
     if (prevBtn) {
-      prevBtn.addEventListener("click", () => navigateMonth("prev"));
+      prevBtn.addEventListener('click', () => navigateMonth('prev'));
     }
 
     if (nextBtn) {
-      nextBtn.addEventListener("click", () => navigateMonth("next"));
+      nextBtn.addEventListener('click', () => navigateMonth('next'));
     }
   }
 
   // Set up day events modal
   function setupDayEventsModal() {
-    const addEventForDayBtn = document.getElementById("addEventForDay");
+    const addEventForDayBtn = document.getElementById('addEventForDay');
 
     if (addEventForDayBtn) {
-      addEventForDayBtn.addEventListener("click", () => {
+      addEventForDayBtn.addEventListener('click', () => {
         closeDayEventsModal();
 
         // Pre-fill date if a day is selected
@@ -1131,9 +1156,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
           // Pre-fill the date field after modal opens
           setTimeout(() => {
-            const dateField = document.getElementById("eventDate");
+            const dateField = document.getElementById('eventDate');
             if (dateField && selectedDate) {
-              dateField.value = selectedDate.toISOString().split("T")[0];
+              dateField.value = selectedDate.toISOString().split('T')[0];
             }
           }, 100);
         }
@@ -1141,11 +1166,11 @@ import { checkAuthenticationState } from "./auth-utils.js";
     }
 
     // Set up modal close handlers for day events modal
-    const dayEventsModal = document.getElementById("dayEventsModal");
+    const dayEventsModal = document.getElementById('dayEventsModal');
     if (dayEventsModal) {
-      const closeButtons = dayEventsModal.querySelectorAll(".modal-close");
+      const closeButtons = dayEventsModal.querySelectorAll('.modal-close');
       closeButtons.forEach((btn) => {
-        btn.addEventListener("click", closeDayEventsModal);
+        btn.addEventListener('click', closeDayEventsModal);
       });
     }
   }
@@ -1155,7 +1180,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
     // Confirm deletion
     if (
       !confirm(
-        "Are you sure you want to delete this event? This action cannot be undone."
+        'Are you sure you want to delete this event? This action cannot be undone.'
       )
     ) {
       return;
@@ -1164,28 +1189,28 @@ import { checkAuthenticationState } from "./auth-utils.js";
     // Find the event card and show loading state
     const eventCard = document.querySelector(`[data-event-id="${eventId}"]`);
     if (eventCard) {
-      showLocalLoader(eventCard.id || "event-card", {
-        text: "Deleting event...",
-        size: "small",
+      showLocalLoader(eventCard.id || 'event-card', {
+        text: 'Deleting event...',
+        size: 'small',
       });
     }
 
     try {
       // Delete from Firestore
-      await deleteDoc(doc(db, "schedule", eventId));
+      await deleteDoc(doc(db, 'schedule', eventId));
 
-      console.log("Event deleted:", eventId);
+      console.log('Event deleted:', eventId);
 
       // Re-render both views
       if (isCoachMode) {
         // In coach mode, re-apply the current filter
-        const dropdown = document.getElementById("playerFilterDropdown");
+        const dropdown = document.getElementById('playerFilterDropdown');
         if (dropdown) {
           currentFilteredData = await filterScheduleData(dropdown.value);
         }
       }
       await renderScheduleEvents();
-      if (currentView === "calendar") {
+      if (currentView === 'calendar') {
         renderCalendar();
       }
 
@@ -1193,22 +1218,22 @@ import { checkAuthenticationState } from "./auth-utils.js";
       closeDayEventsModal();
 
       // Show success message
-      showSuccessMessage("Event deleted successfully!");
+      showSuccessMessage('Event deleted successfully!');
     } catch (error) {
-      console.error("Event deletion error:", error);
+      console.error('Event deletion error:', error);
       if (eventCard) {
-        hideLoadingSpinner(eventCard.id || "event-card");
+        hideLoadingSpinner(eventCard.id || 'event-card');
       }
 
-      let errorMessage = "Unable to delete event. Please try again.";
-      if (error.code === "permission-denied") {
+      let errorMessage = 'Unable to delete event. Please try again.';
+      if (error.code === 'permission-denied') {
         errorMessage = "You don't have permission to delete this event.";
-      } else if (error.code === "not-found") {
-        errorMessage = "Event not found. It may have already been deleted.";
+      } else if (error.code === 'not-found') {
+        errorMessage = 'Event not found. It may have already been deleted.';
       }
 
-      if (typeof showToast === "function") {
-        showToast(errorMessage, "error");
+      if (typeof showToast === 'function') {
+        showToast(errorMessage, 'error');
       } else {
         alert(`Error: ${errorMessage}`);
       }
@@ -1219,20 +1244,20 @@ import { checkAuthenticationState } from "./auth-utils.js";
   async function editEvent(eventId) {
     try {
       // Find the event to edit in Firestore
-      const eventDoc = await getDoc(doc(db, "schedule", eventId));
+      const eventDoc = await getDoc(doc(db, 'schedule', eventId));
 
       if (!eventDoc.exists()) {
-        console.error("Event not found for editing:", eventId);
-        if (typeof showToast === "function") {
-          showToast("Event not found. It may have been deleted.", "error");
+        console.error('Event not found for editing:', eventId);
+        if (typeof showToast === 'function') {
+          showToast('Event not found. It may have been deleted.', 'error');
         } else {
-          alert("Error: Event not found.");
+          alert('Error: Event not found.');
         }
         return;
       }
 
       const event = { id: eventDoc.id, ...eventDoc.data() };
-      console.log("Opening edit modal for event:", event);
+      console.log('Opening edit modal for event:', event);
 
       // Close day events modal if open
       closeDayEventsModal();
@@ -1250,19 +1275,19 @@ import { checkAuthenticationState } from "./auth-utils.js";
           populateEditForm(event);
         }, 100); // Small delay to ensure modal is open
       } else {
-        console.warn("Event modal function not available");
-        alert("Event modal will be available when modals.js is loaded");
+        console.warn('Event modal function not available');
+        alert('Event modal will be available when modals.js is loaded');
       }
     } catch (error) {
-      console.error("Error fetching event for editing:", error);
+      console.error('Error fetching event for editing:', error);
 
-      let errorMessage = "Unable to load event for editing. Please try again.";
-      if (error.code === "permission-denied") {
+      let errorMessage = 'Unable to load event for editing. Please try again.';
+      if (error.code === 'permission-denied') {
         errorMessage = "You don't have permission to edit this event.";
       }
 
-      if (typeof showToast === "function") {
-        showToast(errorMessage, "error");
+      if (typeof showToast === 'function') {
+        showToast(errorMessage, 'error');
       } else {
         alert(`Error: ${errorMessage}`);
       }
@@ -1271,24 +1296,22 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Populate edit form with event data
   function populateEditForm(event) {
-    const form = document.getElementById("addEventForm");
+    const form = document.getElementById('addEventForm');
     if (!form) {
-      console.error("Event form not found");
+      console.error('Event form not found');
       return;
     }
 
     // Update modal title
-    const modalTitle = document.querySelector(
-      "#addEventModal .modal-header h3"
-    );
+    const modalTitle = document.querySelector('#addEventModal .modal-header h3');
     if (modalTitle) {
-      modalTitle.textContent = "Edit Event";
+      modalTitle.textContent = 'Edit Event';
     }
 
     // Update submit button text
-    const submitBtn = form.querySelector(".btn-submit");
+    const submitBtn = form.querySelector('.btn-submit');
     if (submitBtn) {
-      submitBtn.textContent = "Update Event";
+      submitBtn.textContent = 'Update Event';
     }
 
     // Populate form fields
@@ -1304,22 +1327,22 @@ import { checkAuthenticationState } from "./auth-utils.js";
     Object.entries(fields).forEach(([fieldId, value]) => {
       const field = document.getElementById(fieldId);
       if (field) {
-        field.value = value || "";
+        field.value = value || '';
       }
     });
 
-    console.log("Form populated with event data");
+    console.log('Form populated with event data');
   }
 
   // Show success message
   function showSuccessMessage(message) {
     // Use the new toast system if available, otherwise fallback to basic implementation
-    if (typeof showToast === "function") {
-      showToast(message, "success");
+    if (typeof showToast === 'function') {
+      showToast(message, 'success');
     } else {
       // Fallback for when toast.js is not loaded
-      const successDiv = document.createElement("div");
-      successDiv.className = "success-message";
+      const successDiv = document.createElement('div');
+      successDiv.className = 'success-message';
       successDiv.textContent = message;
       document.body.appendChild(successDiv);
       setTimeout(() => {
@@ -1327,101 +1350,95 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }, 3000);
     }
 
-    console.log("Success message shown:", message);
+    console.log('Success message shown:', message);
   }
 
   // Set up event delegation for schedule action buttons
   function setupScheduleEventDelegation() {
-    console.log("Setting up schedule event delegation...");
+    console.log('Setting up schedule event delegation...');
 
     // Single event listener for all event action buttons
-    document.addEventListener("click", async function (event) {
+    document.addEventListener('click', async function (event) {
       const target = event.target;
 
       // Handle delete event buttons
-      if (
-        target.matches(".delete-event-btn") ||
-        target.closest(".delete-event-btn")
-      ) {
+      if (target.matches('.delete-event-btn') || target.closest('.delete-event-btn')) {
         event.preventDefault();
-        const button = target.matches(".delete-event-btn")
+        const button = target.matches('.delete-event-btn')
           ? target
-          : target.closest(".delete-event-btn");
-        const eventId = button.getAttribute("data-event-id");
+          : target.closest('.delete-event-btn');
+        const eventId = button.getAttribute('data-event-id');
 
         if (eventId) {
-          console.log("Delete event clicked:", eventId);
+          console.log('Delete event clicked:', eventId);
           await deleteEvent(eventId);
         } else {
-          console.error("No event ID found for delete button");
+          console.error('No event ID found for delete button');
         }
       }
 
       // Handle edit event buttons
-      if (
-        target.matches(".edit-event-btn") ||
-        target.closest(".edit-event-btn")
-      ) {
+      if (target.matches('.edit-event-btn') || target.closest('.edit-event-btn')) {
         event.preventDefault();
-        const button = target.matches(".edit-event-btn")
+        const button = target.matches('.edit-event-btn')
           ? target
-          : target.closest(".edit-event-btn");
-        const eventId = button.getAttribute("data-event-id");
+          : target.closest('.edit-event-btn');
+        const eventId = button.getAttribute('data-event-id');
 
         if (eventId) {
-          console.log("Edit event clicked:", eventId);
+          console.log('Edit event clicked:', eventId);
           await editEvent(eventId);
         } else {
-          console.error("No event ID found for edit button");
+          console.error('No event ID found for edit button');
         }
       }
     });
 
-    console.log("Schedule event delegation setup complete");
+    console.log('Schedule event delegation setup complete');
   }
 
   // Initialize schedule page when DOM is ready
-  document.addEventListener("DOMContentLoaded", function () {
-    console.log("=== SCHEDULE PAGE INITIALIZATION DEBUG ===");
-    console.log("DOMContentLoaded fired at:", new Date().toISOString());
-    console.log("Schedule page initializing...");
+  document.addEventListener('DOMContentLoaded', function () {
+    console.log('=== SCHEDULE PAGE INITIALIZATION DEBUG ===');
+    console.log('DOMContentLoaded fired at:', new Date().toISOString());
+    console.log('Schedule page initializing...');
 
     // Debug authentication state at initialization
-    const currentUserId = sessionStorage.getItem("currentUserId");
-    console.log("Authentication state during initialization:");
-    console.log("  currentUserId from sessionStorage:", currentUserId);
-    console.log("  window.currentUser:", window.currentUser);
-    console.log("  window.currentUserData:", window.currentUserData);
+    const currentUserId = sessionStorage.getItem('currentUserId');
+    console.log('Authentication state during initialization:');
+    console.log('  currentUserId from sessionStorage:', currentUserId);
+    console.log('  window.currentUser:', window.currentUser);
+    console.log('  window.currentUserData:', window.currentUserData);
 
     // Authentication guard - check if user is logged in
     if (!currentUserId) {
-      console.error("=== INITIALIZATION AUTHENTICATION FAILURE ===");
-      console.error("No authenticated user found during DOMContentLoaded.");
+      console.error('=== INITIALIZATION AUTHENTICATION FAILURE ===');
+      console.error('No authenticated user found during DOMContentLoaded.');
       console.error("This suggests role-manager.js hasn't run yet or failed.");
 
-      if (typeof showToast === "function") {
-        showToast("Please log in to view the schedule.", "error");
+      if (typeof showToast === 'function') {
+        showToast('Please log in to view the schedule.', 'error');
       } else {
-        alert("Please log in to view the schedule.");
+        alert('Please log in to view the schedule.');
       }
       // Redirect to login page
       setTimeout(() => {
-        window.location.href = "index.html";
+        window.location.href = 'index.html';
       }, 2000);
       return; // Stop execution
     }
 
-    console.log("=== INITIALIZATION AUTHENTICATION SUCCESS ===");
-    console.log("Proceeding with schedule page setup...");
+    console.log('=== INITIALIZATION AUTHENTICATION SUCCESS ===');
+    console.log('Proceeding with schedule page setup...');
 
     // Check if user is a coach (from URL parameter)
     const urlParams = new URLSearchParams(window.location.search);
-    const userRole = urlParams.get("user");
+    const userRole = urlParams.get('user');
 
-    if (userRole === "coach") {
+    if (userRole === 'coach') {
       // Coach mode: Transform page for management view
       isCoachMode = true;
-      console.log("Coach mode detected - setting up management interface");
+      console.log('Coach mode detected - setting up management interface');
 
       // Set up coach mode UI
       setupCoachMode();
@@ -1436,9 +1453,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
       setupDayEventsModal();
 
       // Set up global click handler for backdrop
-      const backdrop = document.getElementById("modal-backdrop");
+      const backdrop = document.getElementById('modal-backdrop');
       if (backdrop) {
-        backdrop.addEventListener("click", (e) => {
+        backdrop.addEventListener('click', (e) => {
           if (e.target === backdrop) {
             closeDayEventsModal();
           }
@@ -1446,8 +1463,8 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }
 
       // Set up escape key handler
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
           closeDayEventsModal();
         }
       });
@@ -1461,19 +1478,14 @@ import { checkAuthenticationState } from "./auth-utils.js";
     } else {
       // Player mode: Normal functionality
       isCoachMode = false;
-      console.log("Player mode - loading normal schedule page");
+      console.log('Player mode - loading normal schedule page');
 
       // Initialize view state (ensure list view is shown by default)
       initializeViewState();
 
       // Render schedule events (list view)
-      console.log(
-        "=== CALLING renderScheduleEvents FROM PLAYER MODE INITIALIZATION ==="
-      );
-      console.log(
-        "About to call renderScheduleEvents at:",
-        new Date().toISOString()
-      );
+      console.log('=== CALLING renderScheduleEvents FROM PLAYER MODE INITIALIZATION ===');
+      console.log('About to call renderScheduleEvents at:', new Date().toISOString());
       renderScheduleEvents();
 
       // Set up all UI interactions
@@ -1483,9 +1495,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
       setupDayEventsModal();
 
       // Set up global click handler for backdrop
-      const backdrop = document.getElementById("modal-backdrop");
+      const backdrop = document.getElementById('modal-backdrop');
       if (backdrop) {
-        backdrop.addEventListener("click", (e) => {
+        backdrop.addEventListener('click', (e) => {
           if (e.target === backdrop) {
             closeDayEventsModal();
           }
@@ -1493,8 +1505,8 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }
 
       // Set up escape key handler
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
           closeDayEventsModal();
         }
       });
@@ -1503,7 +1515,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
       setupScheduleEventDelegation();
     }
 
-    console.log("Schedule page initialized successfully");
+    console.log('Schedule page initialized successfully');
   });
 
   // Export functions for external use
