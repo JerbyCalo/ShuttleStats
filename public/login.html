@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -23,6 +23,7 @@
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         width: 100%;
         max-width: 400px;
+        position: relative;
       }
 
       .auth-header {
@@ -135,7 +136,7 @@
 
       .auth-divider::before,
       .auth-divider::after {
-        content: "";
+        content: '';
         flex: 1;
         height: 1px;
         background: #e5e7eb;
@@ -181,17 +182,17 @@
         font-size: 14px;
       }
 
-      .loading {
+      .loading-spinner {
         display: inline-block;
         width: 20px;
         height: 20px;
         border: 3px solid #ffffff;
         border-radius: 50%;
         border-top-color: transparent;
-        animation: spin 1s ease-in-out infinite;
+        animation: spinBasic 1s ease-in-out infinite;
       }
 
-      @keyframes spin {
+      @keyframes spinBasic {
         to {
           transform: rotate(360deg);
         }
@@ -263,38 +264,49 @@
       .auth-btn {
         position: relative;
         overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 48px;
       }
 
       .auth-btn.loading {
-        opacity: 0.7;
+        opacity: 0.8;
         cursor: not-allowed;
         pointer-events: none;
+        color: transparent;
       }
 
       .auth-btn.loading .btn-text {
-        opacity: 0;
+        visibility: hidden;
       }
 
       .auth-btn.loading::after {
-        content: "";
+        content: '';
         position: absolute;
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        width: 16px;
-        height: 16px;
-        border: 2px solid transparent;
-        border-top: 2px solid currentColor;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-top: 2px solid #ffffff;
         border-radius: 50%;
         animation: spin 1s linear infinite;
+        z-index: 1;
+      }
+
+      .google-btn.loading::after {
+        border: 2px solid rgba(0, 0, 0, 0.2);
+        border-top: 2px solid #333333;
       }
 
       @keyframes spin {
         0% {
-          transform: rotate(0deg);
+          transform: translate(-50%, -50%) rotate(0deg);
         }
         100% {
-          transform: rotate(360deg);
+          transform: translate(-50%, -50%) rotate(360deg);
         }
       }
 
@@ -546,7 +558,7 @@
         color: #374151;
       }
 
-      .remember-me input[type="checkbox"] {
+      .remember-me input[type='checkbox'] {
         width: 16px;
         height: 16px;
         accent-color: #1211ca;
@@ -634,19 +646,19 @@
         background: #f8f9ff;
       }
 
-      .radio-option input[type="radio"] {
+      .radio-option input[type='radio'] {
         margin: 0;
         width: 18px;
         height: 18px;
         accent-color: #1211ca;
       }
 
-      .radio-option:has(input[type="radio"]:checked) {
+      .radio-option:has(input[type='radio']:checked) {
         border-color: #1211ca;
         background: #f0f0ff;
       }
 
-      .radio-option:has(input[type="radio"]:checked) .radio-text {
+      .radio-option:has(input[type='radio']:checked) .radio-text {
         color: #1211ca;
         font-weight: 600;
       }
@@ -693,6 +705,47 @@
           padding: 12px 14px;
         }
       }
+
+      /* Form Loading Overlay */
+      .form-loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(2px);
+        z-index: 1000;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+      }
+
+      .form-loading-spinner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+
+      .loading-spinner-centered {
+        width: 32px;
+        height: 32px;
+        border: 3px solid #e5e7eb;
+        border-top: 3px solid #1211ca;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      .loading-text-centered {
+        color: #1211ca;
+        font-size: 16px;
+        font-weight: 500;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
@@ -711,16 +764,8 @@
           <p id="authSubtitle">Sign in to your account</p>
         </div>
 
-        <div
-          id="errorMessage"
-          class="error-message"
-          style="display: none"
-        ></div>
-        <div
-          id="successMessage"
-          class="success-message"
-          style="display: none"
-        ></div>
+        <div id="errorMessage" class="error-message" style="display: none"></div>
+        <div id="successMessage" class="success-message" style="display: none"></div>
 
         <form id="loginForm" class="auth-form">
           <!-- Full Name Fields (only for signup) -->
@@ -739,8 +784,7 @@
               </div>
               <div class="name-field optional">
                 <label for="middleName"
-                  >Middle Name
-                  <span style="color: #9ca3af">(Optional)</span></label
+                  >Middle Name <span style="color: #9ca3af">(Optional)</span></label
                 >
                 <input
                   type="text"
@@ -805,23 +849,11 @@
             <div class="field-error" id="passwordError"></div>
           </div>
 
-          <div
-            class="form-group"
-            id="confirmPasswordGroup"
-            style="display: none"
-          >
+          <div class="form-group" id="confirmPasswordGroup" style="display: none">
             <label for="confirmPassword">Confirm Password</label>
             <div class="password-input-container">
-              <input
-                type="password"
-                id="confirmPassword"
-                name="confirmPassword"
-              />
-              <button
-                type="button"
-                class="password-toggle"
-                id="confirmPasswordToggle"
-              >
+              <input type="password" id="confirmPassword" name="confirmPassword" />
+              <button type="button" class="password-toggle" id="confirmPasswordToggle">
                 👁️
               </button>
             </div>
@@ -835,26 +867,18 @@
               <div class="role-option" id="playerOption" data-role="player">
                 🏸 Player
               </div>
-              <div class="role-option" id="coachOption" data-role="coach">
-                👨‍🏫 Coach
-              </div>
+              <div class="role-option" id="coachOption" data-role="coach">👨‍🏫 Coach</div>
             </div>
           </div>
 
           <!-- Coach Selection for Players -->
-          <div
-            class="form-group"
-            id="coachSelectionGroup"
-            style="display: none"
-          >
+          <div class="form-group" id="coachSelectionGroup" style="display: none">
             <label>Do you have a coach?</label>
             <div class="coach-options">
               <div class="coach-option" id="hasCoachOption" data-coach="yes">
                 Yes, I have a coach
               </div>
-              <div class="coach-option" id="soloOption" data-coach="no">
-                I train solo
-              </div>
+              <div class="coach-option" id="soloOption" data-coach="no">I train solo</div>
             </div>
             <div id="coachNameGroup" style="display: none; margin-top: 15px">
               <label for="coachName">Coach Name</label>
@@ -892,11 +916,7 @@
             <span>or</span>
           </div>
 
-          <button
-            type="button"
-            id="googleSignInBtn"
-            class="auth-btn google-btn"
-          >
+          <button type="button" id="googleSignInBtn" class="auth-btn google-btn">
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path
                 fill="#4285F4"
@@ -937,8 +957,7 @@
               </div>
               <div class="name-field optional">
                 <label for="signup-middleName"
-                  >Middle Name
-                  <span class="optional-text">(Optional)</span></label
+                  >Middle Name <span class="optional-text">(Optional)</span></label
                 >
                 <input
                   type="text"
@@ -985,11 +1004,7 @@
                 placeholder="Enter a strong password"
                 required
               />
-              <button
-                type="button"
-                class="password-toggle"
-                id="signup-passwordToggle"
-              >
+              <button type="button" class="password-toggle" id="signup-passwordToggle">
                 👁️
               </button>
             </div>
@@ -1000,10 +1015,7 @@
             >
               <div class="strength-text" id="signup-strengthText"></div>
               <div class="password-strength-bar">
-                <div
-                  class="password-strength-fill"
-                  id="signup-strengthFill"
-                ></div>
+                <div class="password-strength-fill" id="signup-strengthFill"></div>
               </div>
               <div class="password-requirements">
                 <div class="requirement" id="signup-lengthReq">
@@ -1057,40 +1069,22 @@
           </div>
 
           <!-- Coach Selection for Players (Dynamic) -->
-          <div
-            class="form-group"
-            id="signup-coachSelectionGroup"
-            style="display: none"
-          >
+          <div class="form-group" id="signup-coachSelectionGroup" style="display: none">
             <label>Do you have a coach?</label>
             <div class="radio-group">
               <label class="radio-option">
-                <input
-                  type="radio"
-                  name="hasCoach"
-                  value="yes"
-                  id="signup-hasCoach"
-                />
+                <input type="radio" name="hasCoach" value="yes" id="signup-hasCoach" />
                 <span class="radio-text">Yes, I have a coach</span>
               </label>
               <label class="radio-option">
-                <input
-                  type="radio"
-                  name="hasCoach"
-                  value="no"
-                  id="signup-noCoach"
-                />
+                <input type="radio" name="hasCoach" value="no" id="signup-noCoach" />
                 <span class="radio-text">I train solo</span>
               </label>
             </div>
           </div>
 
           <!-- Coach Email Field (Dynamic) -->
-          <div
-            class="form-group"
-            id="signup-coachEmailGroup"
-            style="display: none"
-          >
+          <div class="form-group" id="signup-coachEmailGroup" style="display: none">
             <label for="signup-coachEmail">Coach's Email Address</label>
             <input
               type="email"
@@ -1112,9 +1106,16 @@
           <span id="authSwitchText">Don't have an account?</span>
           <a href="#" id="authSwitchLink">Sign up</a>
         </div>
+
+        <!-- Loading Overlay for Form -->
+        <div id="formLoadingOverlay" class="form-loading-overlay" style="display: none">
+          <div class="form-loading-spinner">
+            <div class="loading-spinner-centered"></div>
+            <div class="loading-text-centered">Signing you in...</div>
+          </div>
+        </div>
       </div>
     </div>
-
     <!-- Firebase SDK v10 (Modular) -->
     <script type="module" src="./config/firebase-config.js"></script>
 

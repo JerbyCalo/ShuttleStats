@@ -782,6 +782,7 @@
         auth,
         db,
         onAuthStateChanged,
+        signOut,
         doc,
         getDoc,
       } from './config/firebase-config.js';
@@ -973,10 +974,6 @@
           window.location.href = 'player-dashboard.html';
         });
 
-        document.getElementById('signout-btn').addEventListener('click', function () {
-          alert('Sign out functionality would be implemented here');
-        });
-
         document.querySelectorAll('.profile-btn').forEach((button) => {
           button.addEventListener('click', function () {
             const buttonText = this.textContent.trim();
@@ -987,6 +984,24 @@
             }
           });
         });
+
+        // Global logout function for settings dropdown
+        window.logout = async function () {
+          try {
+            await signOut(auth);
+            // Clear any session storage
+            sessionStorage.clear();
+            // Redirect to landing page
+            window.location.href = 'index.html';
+          } catch (error) {
+            console.error('Error signing out:', error);
+            if (typeof showToast === 'function') {
+              showToast('Error signing out. Please try again.', 'error');
+            } else {
+              alert('Error signing out. Please try again.');
+            }
+          }
+        };
 
         window.addEventListener('beforeunload', () => {
           if (typeof unsubscribe === 'function') {

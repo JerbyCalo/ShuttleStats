@@ -133,22 +133,42 @@
   /**
    * Handle logout action
    */
-  function handleLogout() {
+  async function handleLogout() {
     // Close dropdown first
     closeDropdown();
 
-    // Trigger the existing sign out functionality
-    // Check if the signout button exists and trigger its click event
-    const signoutBtn = document.getElementById('signout-btn');
-    if (signoutBtn) {
-      signoutBtn.click();
-    } else {
-      // Fallback: call auth-utils logout if available
+    try {
+      // Try global logout function first (available in pages like profile.html)
       if (window.logout && typeof window.logout === 'function') {
-        window.logout();
-      } else {
-        console.error('Logout functionality not found');
+        await window.logout();
+        return;
       }
+
+      // Try triggering the signout button (available in most pages via app.js)
+      const signoutBtn = document.getElementById('signout-btn');
+      if (signoutBtn) {
+        signoutBtn.click();
+        return;
+      }
+
+      // Fallback: try to access Firebase auth directly
+      if (window.auth && window.auth.signOut) {
+        await window.auth.signOut();
+        sessionStorage.clear();
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Last resort: redirect to landing page
+      console.warn('No logout method found, redirecting to landing page');
+      sessionStorage.clear();
+      window.location.href = 'index.html';
+    } catch (error) {
+      console.error('Error during logout:', error);
+
+      // Even if logout fails, clear session and redirect
+      sessionStorage.clear();
+      window.location.href = 'index.html';
     }
   }
 
