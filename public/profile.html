@@ -753,6 +753,34 @@
                 />
                 <div class="profile-info">
                   <h2 id="profileName" class="profile-name">John Doe</h2>
+                  <!-- Edit Form (hidden by default) -->
+                  <div id="profileEditForm" class="hidden" style="margin-top: 12px">
+                    <input
+                      type="text"
+                      id="firstNameInput"
+                      placeholder="First Name"
+                      style="
+                        padding: 10px;
+                        border: 2px solid var(--border);
+                        border-radius: 8px;
+                        font-size: 1rem;
+                        margin-right: 8px;
+                        width: 150px;
+                      "
+                    />
+                    <input
+                      type="text"
+                      id="lastNameInput"
+                      placeholder="Last Name"
+                      style="
+                        padding: 10px;
+                        border: 2px solid var(--border);
+                        border-radius: 8px;
+                        font-size: 1rem;
+                        width: 150px;
+                      "
+                    />
+                  </div>
                   <p id="profileEmail" class="profile-email">john.doe@example.com</p>
                   <span id="profileRole" class="role-badge">Player</span>
                 </div>
@@ -766,7 +794,19 @@
 
               <!-- Profile Actions -->
               <div class="profile-actions">
-                <button class="profile-btn" type="button">✏️ Edit Profile</button>
+                <button id="editProfileBtn" class="profile-btn" type="button">
+                  ✏️ Edit Profile
+                </button>
+                <button id="saveProfileBtn" class="profile-btn hidden" type="button">
+                  💾 Save Changes
+                </button>
+                <button
+                  id="cancelEditBtn"
+                  class="profile-btn secondary hidden"
+                  type="button"
+                >
+                  ❌ Cancel
+                </button>
                 <button class="profile-btn secondary" type="button">
                   🔒 Change Password
                 </button>
@@ -785,12 +825,25 @@
         signOut,
         doc,
         getDoc,
+        updateDoc,
       } from './config/firebase-config.js';
 
       const profileLoading = document.getElementById('profileLoading');
       const profileContent = document.getElementById('profileContent');
       const coachInfoElement = document.getElementById('coachInfo');
       const coachNameElement = document.getElementById('coachName');
+
+      // Store user profile data globally for editing
+      let userProfileData = null;
+
+      // Get references to edit form elements
+      const profileName = document.getElementById('profileName');
+      const profileEditForm = document.getElementById('profileEditForm');
+      const firstNameInput = document.getElementById('firstNameInput');
+      const lastNameInput = document.getElementById('lastNameInput');
+      const editProfileBtn = document.getElementById('editProfileBtn');
+      const saveProfileBtn = document.getElementById('saveProfileBtn');
+      const cancelEditBtn = document.getElementById('cancelEditBtn');
 
       function toTitleCase(value = '') {
         if (!value) return '';
@@ -922,6 +975,124 @@
         return profile;
       }
 
+      /**
+       * Toggle between view mode and edit mode
+       */
+      function toggleEditMode() {
+        // Toggle visibility of name display vs. edit form
+        profileName.classList.toggle('hidden');
+        profileEditForm.classList.toggle('hidden');
+
+        // Toggle visibility of buttons
+        editProfileBtn.classList.toggle('hidden');
+        saveProfileBtn.classList.toggle('hidden');
+        cancelEditBtn.classList.toggle('hidden');
+      }
+
+      /**
+       * Handle Edit Profile button click
+       */
+      function handleEditClick() {
+        if (!userProfileData || !userProfileData.name) {
+          window.showError('Unable to edit profile. Please refresh the page.');
+          return;
+        }
+
+        // Split the full name into first and last names
+        const fullName = userProfileData.name;
+        const nameParts = fullName.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        // Populate the input fields
+        firstNameInput.value = firstName;
+        lastNameInput.value = lastName;
+
+        // Switch to edit mode
+        toggleEditMode();
+
+        // Focus on the first name input
+        firstNameInput.focus();
+      }
+
+      /**
+       * Handle Cancel button click
+       */
+      function handleCancelClick() {
+        // Simply return to view mode without saving
+        toggleEditMode();
+      }
+
+      /**
+       * Handle Save button click
+       */
+      async function handleSaveClick() {
+        try {
+          // Get trimmed values from inputs
+          const firstName = firstNameInput.value.trim();
+          const lastName = lastNameInput.value.trim();
+
+          // Basic validation
+          if (!firstName) {
+            window.showError('First name cannot be empty.');
+            firstNameInput.focus();
+            return;
+          }
+
+          // Show loading state
+          saveProfileBtn.disabled = true;
+          saveProfileBtn.textContent = '💾 Saving...';
+
+          // Get current user
+          const user = auth.currentUser;
+          if (!user) {
+            throw new Error('No user is currently signed in.');
+          }
+
+          // Update Firestore document
+          const userDocRef = doc(db, 'users', user.uid);
+          await updateDoc(userDocRef, {
+            name: {
+              first: firstName,
+              last: lastName,
+            },
+          });
+
+          // Update local userProfileData
+          const fullName = `${firstName}${lastName ? ' ' + lastName : ''}`;
+          userProfileData.name = fullName;
+
+          // CRITICAL: Update global window.currentUserData with correct object format
+          if (window.currentUserData) {
+            window.currentUserData.name = {
+              first: firstName,
+              last: lastName,
+            };
+          }
+
+          // Refresh the header greeting with updated name
+          if (window.initUserGreeting) {
+            window.initUserGreeting();
+          }
+
+          // Update the on-page profile name display
+          profileName.textContent = fullName;
+
+          // Show success notification
+          window.showSuccess('Profile updated successfully!');
+
+          // Return to view mode
+          toggleEditMode();
+        } catch (error) {
+          console.error('Error updating profile:', error);
+          window.showError('Update failed. Please try again.');
+        } finally {
+          // Restore button state
+          saveProfileBtn.disabled = false;
+          saveProfileBtn.textContent = '💾 Save Changes';
+        }
+      }
+
       document.addEventListener('DOMContentLoaded', () => {
         setLoadingState(true);
 
@@ -933,8 +1104,20 @@
 
           try {
             const profile = await buildProfileData(user);
+            userProfileData = profile; // Store profile data globally
             renderProfile(profile);
             setLoadingState(false);
+
+            // Attach event listeners to edit buttons
+            if (editProfileBtn) {
+              editProfileBtn.addEventListener('click', handleEditClick);
+            }
+            if (cancelEditBtn) {
+              cancelEditBtn.addEventListener('click', handleCancelClick);
+            }
+            if (saveProfileBtn) {
+              saveProfileBtn.addEventListener('click', handleSaveClick);
+            }
           } catch (error) {
             console.error('Error rendering profile:', error);
             setLoadingState(
@@ -972,17 +1155,6 @@
 
         document.getElementById('main-logo-link').addEventListener('click', function () {
           window.location.href = 'player-dashboard.html';
-        });
-
-        document.querySelectorAll('.profile-btn').forEach((button) => {
-          button.addEventListener('click', function () {
-            const buttonText = this.textContent.trim();
-            if (buttonText.includes('Edit Profile')) {
-              alert('Edit Profile functionality would be implemented here');
-            } else if (buttonText.includes('Change Password')) {
-              alert('Change Password functionality would be implemented here');
-            }
-          });
         });
 
         // Global logout function for settings dropdown

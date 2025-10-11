@@ -557,18 +557,24 @@
         letter-spacing: 0.5px;
       }
 
-      .intensity-high {
+      .intensity-extreme {
         background: #ffebee;
-        color: #c62828;
+        color: #b71c1c;
+        border: 1px solid #ef5350;
+      }
+
+      .intensity-high {
+        background: #fff3e0;
+        color: #e65100;
       }
 
       .intensity-medium {
-        background: #fff3e0;
-        color: #ef6c00;
+        background: #fff9c4;
+        color: #f57f17;
       }
 
       .intensity-low {
-        background: #e8f5e8;
+        background: #e8f5e9;
         color: #2e7d32;
       }
 
@@ -976,12 +982,19 @@
               </select>
             </div>
             <div class="form-group">
-              <label for="trainingIntensity">Intensity</label>
+              <label for="trainingIntensity">Intensity (1-10)</label>
               <select id="trainingIntensity" name="trainingIntensity" required>
                 <option value="">Select intensity...</option>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
+                <option value="1">1 - Very Light</option>
+                <option value="2">2 - Light</option>
+                <option value="3">3 - Light</option>
+                <option value="4">4 - Moderate</option>
+                <option value="5">5 - Moderate</option>
+                <option value="6">6 - Moderate</option>
+                <option value="7">7 - Hard</option>
+                <option value="8">8 - Hard</option>
+                <option value="9">9 - Very Hard</option>
+                <option value="10">10 - Maximum</option>
               </select>
             </div>
           </div>

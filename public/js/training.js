@@ -1,5 +1,5 @@
 // ShuttleStats v2 - Training Page Logic
-console.log("training.js loaded");
+console.log('training.js loaded');
 
 // Import Firebase functions for Training Sessions
 import {
@@ -16,10 +16,10 @@ import {
   onSnapshot,
   addDoc,
   serverTimestamp,
-} from "../config/firebase-config.js";
+} from '../config/firebase-config.js';
 
 // Import authentication utilities for better role detection
-import { checkAuthenticationState } from "./auth-utils.js";
+import { checkAuthenticationState } from './auth-utils.js';
 
 (function () {
   // Track if we're in coach mode
@@ -31,93 +31,134 @@ import { checkAuthenticationState } from "./auth-utils.js";
   function formatDate(dateString) {
     const date = new Date(dateString);
     const options = {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
     };
-    return date.toLocaleDateString("en-US", options);
+    return date.toLocaleDateString('en-US', options);
   }
 
-  // Get intensity badge class
+  // Get intensity badge class based on 1-10 scale
   function getIntensityClass(intensity) {
-    switch (intensity.toLowerCase()) {
-      case "high":
-        return "intensity-high";
-      case "medium":
-        return "intensity-medium";
-      case "low":
-        return "intensity-low";
-      default:
-        return "intensity-medium";
+    const intensityNum = parseInt(intensity);
+
+    if (isNaN(intensityNum)) {
+      // Fallback for legacy text values (Low, Medium, High)
+      switch (intensity.toLowerCase()) {
+        case 'high':
+          return 'intensity-high';
+        case 'medium':
+          return 'intensity-medium';
+        case 'low':
+          return 'intensity-low';
+        default:
+          return 'intensity-medium';
+      }
+    }
+
+    // New 1-10 scale classification
+    if (intensityNum >= 9) {
+      return 'intensity-extreme'; // 9-10: Extreme
+    } else if (intensityNum >= 7) {
+      return 'intensity-high'; // 7-8: High
+    } else if (intensityNum >= 4) {
+      return 'intensity-medium'; // 4-6: Medium
+    } else {
+      return 'intensity-low'; // 1-3: Low
+    }
+  }
+
+  // Get intensity label for display
+  function getIntensityLabel(intensity) {
+    const intensityNum = parseInt(intensity);
+
+    if (isNaN(intensityNum)) {
+      // Return legacy text values as-is
+      return intensity;
+    }
+
+    // Return numeric value with descriptive label
+    if (intensityNum >= 9) {
+      return `${intensity} - Extreme`;
+    } else if (intensityNum >= 7) {
+      return `${intensity} - Hard`;
+    } else if (intensityNum >= 4) {
+      return `${intensity} - Moderate`;
+    } else {
+      return `${intensity} - Light`;
     }
   }
 
   // Get player name by ID (for coach mode) - Updated to use real data
   async function getPlayerName(playerId) {
     try {
-      const playerDoc = await getDoc(doc(db, "users", playerId));
+      const playerDoc = await getDoc(doc(db, 'users', playerId));
       if (playerDoc.exists()) {
         const playerData = playerDoc.data();
         return `${playerData.name.first} ${playerData.name.last}`.trim();
       }
-      return "Unknown Player";
+      return 'Unknown Player';
     } catch (error) {
-      console.error("Error fetching player name:", error);
-      return "Unknown Player";
+      console.error('Error fetching player name:', error);
+      return 'Unknown Player';
     }
   }
 
   // Get coach name by ID (for player mode feedback display)
   async function getCoachName(coachId) {
     try {
-      const coachDoc = await getDoc(doc(db, "users", coachId));
+      const coachDoc = await getDoc(doc(db, 'users', coachId));
       if (coachDoc.exists()) {
         const coachData = coachDoc.data();
         return `${coachData.name.first} ${coachData.name.last}`.trim();
       }
-      return "Coach";
+      return 'Coach';
     } catch (error) {
-      console.error("Error fetching coach name:", error);
-      return "Coach";
+      console.error('Error fetching coach name:', error);
+      return 'Coach';
     }
   }
 
   // Submit feedback for a training session
   async function submitFeedback(sessionId) {
-    const currentUserId = sessionStorage.getItem("currentUserId");
-    const currentUserRole = sessionStorage.getItem("userRole");
-    
-    if (!currentUserId || currentUserRole !== "coach") {
-      console.error("Only coaches can submit feedback");
+    const currentUserId = sessionStorage.getItem('currentUserId');
+    const currentUserRole = sessionStorage.getItem('userRole');
+
+    if (!currentUserId || currentUserRole !== 'coach') {
+      console.error('Only coaches can submit feedback');
       return false;
     }
 
-    const feedbackTextarea = document.querySelector(`[data-feedback-session-id="${sessionId}"] .feedback-textarea`);
-    const submitBtn = document.querySelector(`[data-feedback-session-id="${sessionId}"] .feedback-submit-btn`);
-    
+    const feedbackTextarea = document.querySelector(
+      `[data-feedback-session-id="${sessionId}"] .feedback-textarea`
+    );
+    const submitBtn = document.querySelector(
+      `[data-feedback-session-id="${sessionId}"] .feedback-submit-btn`
+    );
+
     if (!feedbackTextarea || !feedbackTextarea.value.trim()) {
-      if (typeof showToast === "function") {
-        showToast("Please enter feedback before submitting", "error");
+      if (typeof showToast === 'function') {
+        showToast('Please enter feedback before submitting', 'error');
       }
       return false;
     }
 
     const feedbackText = feedbackTextarea.value.trim();
-    
+
     // Get session data to find playerId
     try {
-      const sessionDoc = await getDoc(doc(db, "training", sessionId));
+      const sessionDoc = await getDoc(doc(db, 'training', sessionId));
       if (!sessionDoc.exists()) {
-        throw new Error("Training session not found");
+        throw new Error('Training session not found');
       }
-      
+
       const sessionData = sessionDoc.data();
-      
+
       // Disable submit button during submission
       submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting...";
-      
+      submitBtn.textContent = 'Submitting...';
+
       // Create feedback document
       const feedbackData = {
         trainingSessionId: sessionId,
@@ -125,75 +166,74 @@ import { checkAuthenticationState } from "./auth-utils.js";
         playerId: sessionData.playerId,
         content: feedbackText,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
       };
 
-      console.log("Submitting feedback data:", feedbackData);
-      await addDoc(collection(db, "feedback"), feedbackData);
-      
+      console.log('Submitting feedback data:', feedbackData);
+      await addDoc(collection(db, 'feedback'), feedbackData);
+
       // Clear textarea and show success message
-      feedbackTextarea.value = "";
-      
-      if (typeof showToast === "function") {
-        showToast("Feedback submitted successfully!", "success");
+      feedbackTextarea.value = '';
+
+      if (typeof showToast === 'function') {
+        showToast('Feedback submitted successfully!', 'success');
       }
-      
+
       // Optionally, reload the training sessions to show updated state
       // This ensures any UI updates are reflected immediately
       setTimeout(() => {
-        if (typeof window.loadTrainingSessions === "function") {
+        if (typeof window.loadTrainingSessions === 'function') {
           window.loadTrainingSessions();
         }
       }, 500);
-      
-      console.log("Feedback submitted for session:", sessionId);
+
+      console.log('Feedback submitted for session:', sessionId);
       return true;
-      
     } catch (error) {
-      console.error("Error submitting feedback:", error);
-      
-      if (typeof showToast === "function") {
-        showToast("Failed to submit feedback. Please try again.", "error");
+      console.error('Error submitting feedback:', error);
+
+      if (typeof showToast === 'function') {
+        showToast('Failed to submit feedback. Please try again.', 'error');
       }
-      
+
       return false;
     } finally {
       // Re-enable submit button
       submitBtn.disabled = false;
-      submitBtn.textContent = "Submit Feedback";
+      submitBtn.textContent = 'Submit Feedback';
     }
   }
 
   // Load and display feedback for a training session
   async function loadFeedback(sessionId, containerElement) {
     if (!containerElement) {
-      console.error("No container element provided for feedback display");
+      console.error('No container element provided for feedback display');
       return;
     }
 
     try {
       const q = query(
-        collection(db, "feedback"),
-        where("trainingSessionId", "==", sessionId),
-        where("playerId", "==", auth.currentUser.uid),
-        orderBy("createdAt", "desc")
+        collection(db, 'feedback'),
+        where('trainingSessionId', '==', sessionId),
+        where('playerId', '==', auth.currentUser.uid),
+        orderBy('createdAt', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
       const feedbackItems = [];
-      
+
       for (const doc of querySnapshot.docs) {
         const feedbackData = { id: doc.id, ...doc.data() };
         const coachName = await getCoachName(feedbackData.coachId);
-        
+
         feedbackItems.push({
           ...feedbackData,
-          coachName: coachName
+          coachName: coachName,
         });
       }
 
       // Clear existing content
-      containerElement.innerHTML = "";
+      containerElement.innerHTML = '';
 
       if (feedbackItems.length === 0) {
         containerElement.innerHTML = `
@@ -205,21 +245,21 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }
 
       // Render feedback items
-      feedbackItems.forEach(feedback => {
-        const feedbackElement = document.createElement("div");
-        feedbackElement.className = "feedback-item";
-        
+      feedbackItems.forEach((feedback) => {
+        const feedbackElement = document.createElement('div');
+        feedbackElement.className = 'feedback-item';
+
         // Format date
-        let feedbackDate = "Recently";
+        let feedbackDate = 'Recently';
         if (feedback.createdAt && feedback.createdAt.toDate) {
-          feedbackDate = feedback.createdAt.toDate().toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
+          feedbackDate = feedback.createdAt.toDate().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
           });
         }
-        
+
         feedbackElement.innerHTML = `
           <div class="feedback-meta">
             <span class="feedback-coach">Coach ${feedback.coachName}</span>
@@ -227,12 +267,11 @@ import { checkAuthenticationState } from "./auth-utils.js";
           </div>
           <div class="feedback-content">${feedback.content}</div>
         `;
-        
+
         containerElement.appendChild(feedbackElement);
       });
-
     } catch (error) {
-      console.error("Error loading feedback:", error);
+      console.error('Error loading feedback:', error);
       containerElement.innerHTML = `
         <div class="no-feedback">
           Unable to load feedback. Please try again later.
@@ -247,44 +286,48 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
     try {
       const q = query(
-        collection(db, "feedback"),
-        where("trainingSessionId", "==", sessionId),
-        where("playerId", "==", auth.currentUser.uid),
-        orderBy("createdAt", "desc")
+        collection(db, 'feedback'),
+        where('trainingSessionId', '==', sessionId),
+        where('playerId', '==', auth.currentUser.uid),
+        orderBy('createdAt', 'desc')
       );
 
-      const unsubscribe = onSnapshot(q, async (snapshot) => {
-        console.log("Real-time feedback update received for session:", sessionId);
-        
-        // Reload feedback when changes occur
-        await loadFeedback(sessionId, containerElement);
-      }, (error) => {
-        console.error("Error in feedback listener:", error);
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        async (snapshot) => {
+          console.log('Real-time feedback update received for session:', sessionId);
+
+          // Reload feedback when changes occur
+          await loadFeedback(sessionId, containerElement);
+        },
+        (error) => {
+          console.error('Error in feedback listener:', error);
+        }
+      );
 
       // Store the unsubscribe function for cleanup
       if (!containerElement.feedbackListener) {
         containerElement.feedbackListener = unsubscribe;
       }
     } catch (error) {
-      console.error("Error setting up feedback listener:", error);
+      console.error('Error setting up feedback listener:', error);
     }
   }
 
   // Create training session card
   async function createTrainingCard(session) {
-    const card = document.createElement("div");
-    card.className = "training-card";
+    const card = document.createElement('div');
+    card.className = 'training-card';
     card.dataset.sessionId = session.id;
 
     // Get current user role from session storage or window.currentUserData
-    let currentUserRole = sessionStorage.getItem("userRole");
+    let currentUserRole = sessionStorage.getItem('userRole');
     if (!currentUserRole && window.currentUserData) {
       currentUserRole = window.currentUserData.role;
     }
-    
+
     // For coach mode, add player name to the header
-    let playerInfo = "";
+    let playerInfo = '';
     if (isCoachMode) {
       const playerName = await getPlayerName(session.playerId);
       playerInfo = `<div class="player-info" style="color: var(--primary); font-weight: 600; font-size: 0.9rem; margin-bottom: 8px;">
@@ -293,8 +336,8 @@ import { checkAuthenticationState } from "./auth-utils.js";
     }
 
     // Create feedback section based on user role
-    let feedbackSection = "";
-    if (currentUserRole === "coach") {
+    let feedbackSection = '';
+    if (currentUserRole === 'coach') {
       // Coach feedback form
       feedbackSection = `
         <div class="feedback-section" data-feedback-session-id="${session.id}">
@@ -314,7 +357,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
           </div>
         </div>
       `;
-    } else if (currentUserRole === "player") {
+    } else if (currentUserRole === 'player') {
       // Player feedback display
       feedbackSection = `
         <div class="feedback-section">
@@ -342,7 +385,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
           <span class="type-badge">${session.type}</span>
           <span class="intensity-badge ${getIntensityClass(
             session.intensity
-          )}">${session.intensity}</span>
+          )}">${getIntensityLabel(session.intensity)}</span>
         </div>
       </div>
       
@@ -356,10 +399,8 @@ import { checkAuthenticationState } from "./auth-utils.js";
           <strong>Exercises:</strong>
           <div class="exercise-list">
             ${session.exercises
-              .map(
-                (exercise) => `<span class="exercise-tag">${exercise}</span>`
-              )
-              .join("")}
+              .map((exercise) => `<span class="exercise-tag">${exercise}</span>`)
+              .join('')}
           </div>
         </div>
         
@@ -373,9 +414,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
         ${(() => {
           // Only players can edit/delete their own sessions
           // Coaches get read-only view regardless of their involvement
-          const currentUserId = sessionStorage.getItem("currentUserId");
-          
-          if (currentUserRole === "player" && currentUserId === session.playerId) {
+          const currentUserId = sessionStorage.getItem('currentUserId');
+
+          if (currentUserRole === 'player' && currentUserId === session.playerId) {
             // Players can edit/delete their own sessions
             return `
               <button class="action-btn edit-btn" data-action="edit" data-session-id="${session.id}" title="Edit Session">
@@ -401,19 +442,23 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
     // After creating the card, set up event listeners and load data based on role
     setTimeout(async () => {
-      if (currentUserRole === "coach") {
+      if (currentUserRole === 'coach') {
         // Add event listener for feedback submission
-        const feedbackForm = card.querySelector(`[data-feedback-session-id="${session.id}"]`);
+        const feedbackForm = card.querySelector(
+          `[data-feedback-session-id="${session.id}"]`
+        );
         const submitBtn = feedbackForm?.querySelector('.feedback-submit-btn');
-        
+
         if (submitBtn) {
           submitBtn.addEventListener('click', async () => {
             await submitFeedback(session.id);
           });
         }
-      } else if (currentUserRole === "player") {
+      } else if (currentUserRole === 'player') {
         // Load existing feedback for players and set up real-time listener
-        const feedbackDisplay = card.querySelector(`[data-feedback-display="${session.id}"]`);
+        const feedbackDisplay = card.querySelector(
+          `[data-feedback-display="${session.id}"]`
+        );
         if (feedbackDisplay) {
           await loadFeedback(session.id, feedbackDisplay);
           setupFeedbackListener(session.id, feedbackDisplay);
@@ -427,15 +472,15 @@ import { checkAuthenticationState } from "./auth-utils.js";
   // Fetch training sessions from Firestore (Player View)
   async function fetchPlayerTrainingSessions(userId) {
     if (!userId) {
-      console.warn("No user ID provided for fetching training sessions");
+      console.warn('No user ID provided for fetching training sessions');
       return [];
     }
 
     try {
       const q = query(
-        collection(db, "training"),
-        where("playerId", "==", userId),
-        orderBy("date", "desc")
+        collection(db, 'training'),
+        where('playerId', '==', userId),
+        orderBy('date', 'desc')
       );
 
       const querySnapshot = await getDocs(q);
@@ -444,12 +489,10 @@ import { checkAuthenticationState } from "./auth-utils.js";
         ...doc.data(),
       }));
 
-      console.log(
-        `Fetched ${sessions.length} training sessions for player ${userId}`
-      );
+      console.log(`Fetched ${sessions.length} training sessions for player ${userId}`);
       return sessions;
     } catch (error) {
-      console.error("Error fetching training sessions:", error);
+      console.error('Error fetching training sessions:', error);
       throw error;
     }
   }
@@ -457,23 +500,23 @@ import { checkAuthenticationState } from "./auth-utils.js";
   // Fetch training sessions from Firestore (Coach View)
   async function fetchCoachTrainingSessions(coachId, playerId = null) {
     if (!coachId) {
-      console.warn("No coach ID provided for fetching training sessions");
+      console.warn('No coach ID provided for fetching training sessions');
       return [];
     }
 
     try {
       let q;
-      if (playerId && playerId !== "") {
+      if (playerId && playerId !== '') {
         // Filter by specific player (no more "all" option)
         q = query(
-          collection(db, "training"),
-          where("coachId", "==", coachId),
-          where("playerId", "==", playerId),
-          orderBy("date", "desc")
+          collection(db, 'training'),
+          where('coachId', '==', coachId),
+          where('playerId', '==', playerId),
+          orderBy('date', 'desc')
         );
       } else {
         // If no specific player is provided, return empty array
-        console.log("No player selected, returning empty array");
+        console.log('No player selected, returning empty array');
         return [];
       }
 
@@ -488,16 +531,16 @@ import { checkAuthenticationState } from "./auth-utils.js";
       );
       return sessions;
     } catch (error) {
-      console.error("Error fetching coach training sessions:", error);
+      console.error('Error fetching coach training sessions:', error);
       throw error;
     }
   }
 
   // Filter training data by player ID (for coach mode) - Updated to use Firestore data
   async function filterTrainingData(playerId) {
-    const currentUserId = sessionStorage.getItem("currentUserId");
+    const currentUserId = sessionStorage.getItem('currentUserId');
     if (!currentUserId) {
-      console.warn("No authenticated user for filtering training data");
+      console.warn('No authenticated user for filtering training data');
       return [];
     }
 
@@ -510,19 +553,19 @@ import { checkAuthenticationState } from "./auth-utils.js";
         return await fetchPlayerTrainingSessions(currentUserId);
       }
     } catch (error) {
-      console.error("Error filtering training data:", error);
+      console.error('Error filtering training data:', error);
       return [];
     }
   }
 
   // Update training statistics (works with Firestore data)
   function updateTrainingStats(dataToUse = []) {
-    const totalSessionsEl = document.getElementById("totalSessions");
-    const totalHoursEl = document.getElementById("totalHours");
+    const totalSessionsEl = document.getElementById('totalSessions');
+    const totalHoursEl = document.getElementById('totalHours');
 
     if (!dataToUse || dataToUse.length === 0) {
-      if (totalSessionsEl) totalSessionsEl.textContent = "0";
-      if (totalHoursEl) totalHoursEl.textContent = "0";
+      if (totalSessionsEl) totalSessionsEl.textContent = '0';
+      if (totalHoursEl) totalHoursEl.textContent = '0';
       return;
     }
 
@@ -536,24 +579,22 @@ import { checkAuthenticationState } from "./auth-utils.js";
     if (totalSessionsEl) totalSessionsEl.textContent = totalSessions;
     if (totalHoursEl) totalHoursEl.textContent = totalHours;
 
-    console.log(
-      `Stats updated: ${totalSessions} sessions, ${totalHours} hours`
-    );
+    console.log(`Stats updated: ${totalSessions} sessions, ${totalHours} hours`);
   }
 
   // Render training sessions (works with Firestore data)
   async function renderTrainingSessions(sessionsData = null) {
-    const container = document.getElementById("trainingSessionsContainer");
+    const container = document.getElementById('trainingSessionsContainer');
 
     if (!container) {
-      console.error("Training sessions container not found");
+      console.error('Training sessions container not found');
       return;
     }
 
     // Show loading spinner
-    showLocalLoader("trainingSessionsContainer", {
-      text: "Loading training sessions...",
-      size: "normal",
+    showLocalLoader('trainingSessionsContainer', {
+      text: 'Loading training sessions...',
+      size: 'normal',
     });
 
     try {
@@ -564,18 +605,18 @@ import { checkAuthenticationState } from "./auth-utils.js";
         dataToRender = sessionsData;
       } else {
         // Fetch data based on user role and authentication
-        const currentUserId = sessionStorage.getItem("currentUserId");
+        const currentUserId = sessionStorage.getItem('currentUserId');
         if (!currentUserId) {
-          throw new Error("User not authenticated");
+          throw new Error('User not authenticated');
         }
 
         if (isCoachMode) {
           // Coach mode: use current filtered data or fetch all
-          const dropdown = document.getElementById("playerFilterDropdown");
-          const selectedPlayerId = dropdown ? dropdown.value : "all";
+          const dropdown = document.getElementById('playerFilterDropdown');
+          const selectedPlayerId = dropdown ? dropdown.value : 'all';
           dataToRender = await fetchCoachTrainingSessions(
             currentUserId,
-            selectedPlayerId === "" ? "all" : selectedPlayerId
+            selectedPlayerId === '' ? 'all' : selectedPlayerId
           );
         } else {
           // Player mode: fetch user's own sessions
@@ -584,22 +625,22 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }
 
       // Clear existing content after loading
-      container.innerHTML = "";
+      container.innerHTML = '';
 
       // Hide loading spinner
-      hideLoadingSpinner("trainingSessionsContainer");
+      hideLoadingSpinner('trainingSessionsContainer');
 
       // Check if we have training data
       if (!dataToRender || dataToRender.length === 0) {
         const emptyMessage = isCoachMode
-          ? "No training sessions found for the selected player."
-          : "No training sessions yet. Start logging your training sessions to see them here.";
+          ? 'No training sessions found for the selected player.'
+          : 'No training sessions yet. Start logging your training sessions to see them here.';
 
-        showEmptyState("trainingSessionsContainer", {
-          icon: "🏸",
-          title: "No Training Sessions",
+        showEmptyState('trainingSessionsContainer', {
+          icon: '🏸',
+          title: 'No Training Sessions',
           message: emptyMessage,
-          actionText: "+ Add Training Session",
+          actionText: '+ Add Training Session',
           onAction: () => {
             if (window.openLogTrainingModal) {
               window.openLogTrainingModal();
@@ -625,16 +666,16 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
       console.log(`Rendered ${sortedSessions.length} training sessions`);
     } catch (error) {
-      console.error("Error rendering training sessions:", error);
-      hideLoadingSpinner("trainingSessionsContainer");
+      console.error('Error rendering training sessions:', error);
+      hideLoadingSpinner('trainingSessionsContainer');
 
-      showEmptyState("trainingSessionsContainer", {
-        icon: "⚠️",
-        title: "Error Loading Sessions",
+      showEmptyState('trainingSessionsContainer', {
+        icon: '⚠️',
+        title: 'Error Loading Sessions',
         message:
-          error.message === "User not authenticated"
-            ? "Please log in to view your training sessions."
-            : "Unable to load training sessions. Please try refreshing the page.",
+          error.message === 'User not authenticated'
+            ? 'Please log in to view your training sessions.'
+            : 'Unable to load training sessions. Please try refreshing the page.',
       });
     }
   }
@@ -645,18 +686,18 @@ import { checkAuthenticationState } from "./auth-utils.js";
       return;
     }
 
-    const currentUserId = sessionStorage.getItem("currentUserId");
+    const currentUserId = sessionStorage.getItem('currentUserId');
     if (!currentUserId) {
-      console.error("No authenticated user for player dropdown");
+      console.error('No authenticated user for player dropdown');
       return;
     }
 
-    console.log("=== DEBUG: Creating player filter dropdown ===");
-    console.log("Current coach user ID:", currentUserId);
+    console.log('=== DEBUG: Creating player filter dropdown ===');
+    console.log('Current coach user ID:', currentUserId);
 
     try {
       // Create dropdown container
-      const filterContainer = document.createElement("div");
+      const filterContainer = document.createElement('div');
       filterContainer.style.cssText = `
         margin: 20px 0;
         padding: 20px;
@@ -667,9 +708,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
       `;
 
       // Create label
-      const label = document.createElement("label");
-      label.htmlFor = "playerFilterDropdown";
-      label.textContent = "Filter by Player:";
+      const label = document.createElement('label');
+      label.htmlFor = 'playerFilterDropdown';
+      label.textContent = 'Filter by Player:';
       label.style.cssText = `
         display: block;
         margin-bottom: 8px;
@@ -679,9 +720,9 @@ import { checkAuthenticationState } from "./auth-utils.js";
       `;
 
       // Create dropdown
-      const dropdown = document.createElement("select");
-      dropdown.id = "playerFilterDropdown";
-      dropdown.className = "form-control";
+      const dropdown = document.createElement('select');
+      dropdown.id = 'playerFilterDropdown';
+      dropdown.className = 'form-control';
       dropdown.style.cssText = `
         width: 100%;
         max-width: 300px;
@@ -696,30 +737,30 @@ import { checkAuthenticationState } from "./auth-utils.js";
       `;
 
       // Clear existing options (REMOVE "All Players" option)
-      dropdown.innerHTML = "";
+      dropdown.innerHTML = '';
 
       // Fetch coach's players from Firestore
       const coachPlayersQuery = query(
-        collection(db, "coach_players"),
-        where("coachId", "==", currentUserId),
-        where("status", "==", "accepted")
+        collection(db, 'coach_players'),
+        where('coachId', '==', currentUserId),
+        where('status', '==', 'accepted')
       );
 
       console.log("=== DEBUG: Querying for coach's players ===");
       const querySnapshot = await getDocs(coachPlayersQuery);
-      console.log("Found", querySnapshot.size, "player relationships");
+      console.log('Found', querySnapshot.size, 'player relationships');
 
       if (querySnapshot.empty) {
-        console.log("=== DEBUG: No player relationships found ===");
-        console.log("This could mean:");
-        console.log("1. Coach has no players assigned");
-        console.log("2. Incorrect coachId in query");
+        console.log('=== DEBUG: No player relationships found ===');
+        console.log('This could mean:');
+        console.log('1. Coach has no players assigned');
+        console.log('2. Incorrect coachId in query');
         console.log("3. Players haven't accepted invitations yet");
 
         // Show "No Players" message
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "No Players Found";
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No Players Found';
         dropdown.appendChild(option);
         return;
       }
@@ -728,32 +769,26 @@ import { checkAuthenticationState } from "./auth-utils.js";
       const players = [];
       for (const docSnapshot of querySnapshot.docs) {
         const relationship = docSnapshot.data();
-        console.log("=== DEBUG: Processing player relationship ===");
-        console.log("Relationship data:", relationship);
+        console.log('=== DEBUG: Processing player relationship ===');
+        console.log('Relationship data:', relationship);
 
         try {
           if (!relationship.playerId) {
-            console.warn("Player relationship missing playerId:", relationship);
+            console.warn('Player relationship missing playerId:', relationship);
             continue;
           }
 
           // Fetch player details
-          const playerDoc = await getDoc(
-            doc(db, "users", relationship.playerId)
-          );
+          const playerDoc = await getDoc(doc(db, 'users', relationship.playerId));
 
-          console.log("Player document exists:", playerDoc.exists());
+          console.log('Player document exists:', playerDoc.exists());
 
           if (playerDoc.exists()) {
             const playerData = playerDoc.data();
-            console.log("Player data:", playerData);
+            console.log('Player data:', playerData);
 
-            if (
-              !playerData.name ||
-              !playerData.name.first ||
-              !playerData.name.last
-            ) {
-              console.warn("Player missing name data:", playerData);
+            if (!playerData.name || !playerData.name.first || !playerData.name.last) {
+              console.warn('Player missing name data:', playerData);
               continue;
             }
 
@@ -768,12 +803,10 @@ import { checkAuthenticationState } from "./auth-utils.js";
               })`
             );
           } else {
-            console.warn(
-              `Player document not found for ID: ${relationship.playerId}`
-            );
+            console.warn(`Player document not found for ID: ${relationship.playerId}`);
           }
         } catch (error) {
-          console.error("Error fetching player details:", error);
+          console.error('Error fetching player details:', error);
         }
       }
 
@@ -781,7 +814,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
       // Populate dropdown with players only (NO "All Players" option)
       players.forEach((player) => {
-        const option = document.createElement("option");
+        const option = document.createElement('option');
         option.value = player.id;
         option.textContent = player.name;
         dropdown.appendChild(option);
@@ -799,7 +832,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }
 
       // Add event listener for filtering
-      dropdown.addEventListener("change", async function () {
+      dropdown.addEventListener('change', async function () {
         const selectedPlayerId = this.value;
         console.log(`Filtering training data for player: ${selectedPlayerId}`);
 
@@ -812,104 +845,100 @@ import { checkAuthenticationState } from "./auth-utils.js";
       filterContainer.appendChild(dropdown);
 
       // Find the action bar and insert the filter before it
-      const actionBar = document.querySelector(".action-bar");
+      const actionBar = document.querySelector('.action-bar');
       if (actionBar && actionBar.parentNode) {
         actionBar.parentNode.insertBefore(filterContainer, actionBar);
       }
 
-      console.log("Player filter dropdown created with Firestore data");
+      console.log('Player filter dropdown created with Firestore data');
     } catch (error) {
-      console.error("Error creating player filter dropdown:", error);
+      console.error('Error creating player filter dropdown:', error);
 
       // Show error message
-      if (typeof showToast === "function") {
-        showToast("Failed to load player list", "error");
+      if (typeof showToast === 'function') {
+        showToast('Failed to load player list', 'error');
       }
     }
   }
 
   // Set up coach mode UI transformations
   function setupCoachMode() {
-    console.log("Setting up coach mode UI...");
+    console.log('Setting up coach mode UI...');
 
     // Update page title
-    const pageTitle = document.querySelector(".page-title h1");
+    const pageTitle = document.querySelector('.page-title h1');
     if (pageTitle) {
-      pageTitle.textContent = "Manage Training";
+      pageTitle.textContent = 'Manage Training';
     }
 
     // Update subheading
-    const subheading = document.querySelector(".page-title .subheading");
+    const subheading = document.querySelector('.page-title .subheading');
     if (subheading) {
-      subheading.textContent = "Manage training sessions for all players";
+      subheading.textContent = 'Manage training sessions for all players';
     }
 
     // Create and inject player filter dropdown
     createPlayerFilterDropdown();
 
-    console.log("Coach mode UI setup complete");
+    console.log('Coach mode UI setup complete');
   }
 
   // Set up event delegation for edit and delete buttons
   function setupEventDelegation() {
-    const trainingContainer = document.getElementById(
-      "trainingSessionsContainer"
-    );
+    const trainingContainer = document.getElementById('trainingSessionsContainer');
 
     if (trainingContainer) {
-      trainingContainer.addEventListener("click", function (event) {
+      trainingContainer.addEventListener('click', function (event) {
         const target = event.target;
         let button = null;
 
         // Check if clicked element is a button or a child of a button
-        if (target.classList.contains("action-btn")) {
+        if (target.classList.contains('action-btn')) {
           button = target;
-        } else if (target.closest(".action-btn")) {
-          button = target.closest(".action-btn");
+        } else if (target.closest('.action-btn')) {
+          button = target.closest('.action-btn');
         }
 
         if (button) {
           const action = button.dataset.action;
           const sessionId = button.dataset.sessionId;
 
-          if (action === "edit" && sessionId) {
-            console.log("Edit button clicked for session:", sessionId);
+          if (action === 'edit' && sessionId) {
+            console.log('Edit button clicked for session:', sessionId);
             window.editTrainingSession(sessionId);
-          } else if (action === "delete" && sessionId) {
-            console.log("Delete button clicked for session:", sessionId);
+          } else if (action === 'delete' && sessionId) {
+            console.log('Delete button clicked for session:', sessionId);
             window.deleteTrainingSession(sessionId);
           }
         }
       });
 
-      console.log("Event delegation set up for training card actions");
+      console.log('Event delegation set up for training card actions');
     } else {
-      console.warn(
-        "Training sessions container not found for event delegation"
-      );
+      console.warn('Training sessions container not found for event delegation');
     }
   }
 
   // Set up "Add New Training" button
   function setupAddTrainingButton() {
-    const addButton = document.getElementById("addTrainingBtn");
+    const addButton = document.getElementById('addTrainingBtn');
 
     if (addButton) {
-      addButton.addEventListener("click", function () {
-        console.log("Opening training modal");
+      addButton.addEventListener('click', function () {
+        console.log('Opening training modal');
 
         // Check if modal function exists (from modals.js)
         if (window.openLogTrainingModal) {
           window.openLogTrainingModal();
         } else {
-          console.warn("Training modal function not available");
-          alert("Training modal will be available when modals.js is loaded");
+          console.warn('Training modal function not available');
+          alert('Training modal will be available when modals.js is loaded');
         }
       });
 
-      console.log("Add training button set up");
+      console.log('Add training button set up');
     } else {
-      console.warn("Add training button not found");
+      console.warn('Add training button not found');
     }
   }
 
@@ -918,54 +947,50 @@ import { checkAuthenticationState } from "./auth-utils.js";
     // Confirm deletion
     if (
       !confirm(
-        "Are you sure you want to delete this training session? This action cannot be undone."
+        'Are you sure you want to delete this training session? This action cannot be undone.'
       )
     ) {
       return;
     }
 
-    const currentUserId = sessionStorage.getItem("currentUserId");
+    const currentUserId = sessionStorage.getItem('currentUserId');
     if (!currentUserId) {
-      alert("Error: You must be logged in to delete training sessions.");
+      alert('Error: You must be logged in to delete training sessions.');
       return;
     }
 
     // Find the session card and show loading state
-    const sessionCard = document.querySelector(
-      `[data-session-id="${sessionId}"]`
-    );
+    const sessionCard = document.querySelector(`[data-session-id="${sessionId}"]`);
     if (sessionCard) {
-      showLocalLoader(sessionCard.id || "session-card", {
-        text: "Deleting session...",
-        size: "small",
+      showLocalLoader(sessionCard.id || 'session-card', {
+        text: 'Deleting session...',
+        size: 'small',
       });
     }
 
     try {
       // Delete from Firestore
-      await deleteDoc(doc(db, "training", sessionId));
+      await deleteDoc(doc(db, 'training', sessionId));
 
-      console.log("Training session deleted from Firestore:", sessionId);
+      console.log('Training session deleted from Firestore:', sessionId);
 
       // Re-render the sessions list using the centralized function
       await window.loadTrainingSessions();
 
       // Show success message
-      showSuccessMessage("Training session deleted successfully!");
+      showSuccessMessage('Training session deleted successfully!');
     } catch (error) {
-      console.error("Session deletion error:", error);
+      console.error('Session deletion error:', error);
       if (sessionCard) {
-        hideLoadingSpinner(sessionCard.id || "session-card");
+        hideLoadingSpinner(sessionCard.id || 'session-card');
       }
 
       // Show specific error messages based on the error type
-      let errorMessage = "Unable to delete training session. Please try again.";
-      if (error.code === "permission-denied") {
-        errorMessage =
-          "You don't have permission to delete this training session.";
-      } else if (error.code === "not-found") {
-        errorMessage =
-          "Training session not found. It may have already been deleted.";
+      let errorMessage = 'Unable to delete training session. Please try again.';
+      if (error.code === 'permission-denied') {
+        errorMessage = "You don't have permission to delete this training session.";
+      } else if (error.code === 'not-found') {
+        errorMessage = 'Training session not found. It may have already been deleted.';
       }
 
       alert(`Error: ${errorMessage}`);
@@ -974,25 +999,25 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
   // Edit training session
   window.editTrainingSession = async function (sessionId) {
-    const currentUserId = sessionStorage.getItem("currentUserId");
+    const currentUserId = sessionStorage.getItem('currentUserId');
     if (!currentUserId) {
-      alert("Error: You must be logged in to edit training sessions.");
+      alert('Error: You must be logged in to edit training sessions.');
       return;
     }
 
     try {
       // Fetch the session from Firestore to get the latest data
-      const sessionDoc = await getDoc(doc(db, "training", sessionId));
+      const sessionDoc = await getDoc(doc(db, 'training', sessionId));
 
       if (!sessionDoc.exists()) {
-        console.error("Session not found for editing:", sessionId);
-        alert("Error: Training session not found.");
+        console.error('Session not found for editing:', sessionId);
+        alert('Error: Training session not found.');
         return;
       }
 
       const session = { id: sessionDoc.id, ...sessionDoc.data() };
 
-      console.log("Opening edit modal for session:", session);
+      console.log('Opening edit modal for session:', session);
 
       // Check if modal function exists (from modals.js)
       if (window.openLogTrainingModal) {
@@ -1007,35 +1032,33 @@ import { checkAuthenticationState } from "./auth-utils.js";
           populateEditForm(session);
         }, 100); // Small delay to ensure modal is open
       } else {
-        console.warn("Training modal function not available");
-        alert("Training modal will be available when modals.js is loaded");
+        console.warn('Training modal function not available');
+        alert('Training modal will be available when modals.js is loaded');
       }
     } catch (error) {
-      console.error("Error fetching session for edit:", error);
-      alert("Error: Unable to load training session data for editing.");
+      console.error('Error fetching session for edit:', error);
+      alert('Error: Unable to load training session data for editing.');
     }
   };
 
   // Populate edit form with session data
   function populateEditForm(session) {
-    const form = document.getElementById("logTrainingForm");
+    const form = document.getElementById('logTrainingForm');
     if (!form) {
-      console.error("Training form not found");
+      console.error('Training form not found');
       return;
     }
 
     // Update modal title
-    const modalTitle = document.querySelector(
-      "#logTrainingModal .modal-header h3"
-    );
+    const modalTitle = document.querySelector('#logTrainingModal .modal-header h3');
     if (modalTitle) {
-      modalTitle.textContent = "Edit Training Session";
+      modalTitle.textContent = 'Edit Training Session';
     }
 
     // Update submit button text
-    const submitBtn = form.querySelector(".btn-submit");
+    const submitBtn = form.querySelector('.btn-submit');
     if (submitBtn) {
-      submitBtn.textContent = "Update Session";
+      submitBtn.textContent = 'Update Session';
     }
 
     // Populate form fields
@@ -1051,22 +1074,22 @@ import { checkAuthenticationState } from "./auth-utils.js";
     Object.entries(fields).forEach(([fieldId, value]) => {
       const field = document.getElementById(fieldId);
       if (field) {
-        field.value = value || "";
+        field.value = value || '';
       }
     });
 
-    console.log("Form populated with session data");
+    console.log('Form populated with session data');
   }
 
   // Show success message
   function showSuccessMessage(message) {
     // Use the new toast system if available, otherwise fallback to basic implementation
-    if (typeof showToast === "function") {
-      showToast(message, "success");
+    if (typeof showToast === 'function') {
+      showToast(message, 'success');
     } else {
       // Fallback for when toast.js is not loaded
-      const successDiv = document.createElement("div");
-      successDiv.className = "success-message";
+      const successDiv = document.createElement('div');
+      successDiv.className = 'success-message';
       successDiv.textContent = message;
       document.body.appendChild(successDiv);
       setTimeout(() => {
@@ -1074,61 +1097,58 @@ import { checkAuthenticationState } from "./auth-utils.js";
       }, 3000);
     }
 
-    console.log("Success message shown:", message);
+    console.log('Success message shown:', message);
   }
 
   // Centralized function to load training sessions
   window.loadTrainingSessions = async function () {
-    console.log("Loading training sessions...");
+    console.log('Loading training sessions...');
 
-    const container = document.getElementById("trainingSessionsContainer");
+    const container = document.getElementById('trainingSessionsContainer');
     if (!container) {
-      console.error("Training sessions container not found");
+      console.error('Training sessions container not found');
       return;
     }
 
     // Show loading spinner
-    showLocalLoader("trainingSessionsContainer", {
-      text: "Loading training sessions...",
-      size: "normal",
+    showLocalLoader('trainingSessionsContainer', {
+      text: 'Loading training sessions...',
+      size: 'normal',
     });
 
     try {
-      const currentUserId = sessionStorage.getItem("currentUserId");
+      const currentUserId = sessionStorage.getItem('currentUserId');
       if (!currentUserId) {
-        throw new Error("User not authenticated");
+        throw new Error('User not authenticated');
       }
 
       let dataToRender;
 
       if (isCoachMode) {
         // Coach mode: use current filtered data or fetch all
-        const dropdown = document.getElementById("playerFilterDropdown");
-        const selectedPlayerId = dropdown ? dropdown.value : "";
-        dataToRender = await fetchCoachTrainingSessions(
-          currentUserId,
-          selectedPlayerId
-        );
+        const dropdown = document.getElementById('playerFilterDropdown');
+        const selectedPlayerId = dropdown ? dropdown.value : '';
+        dataToRender = await fetchCoachTrainingSessions(currentUserId, selectedPlayerId);
       } else {
         // Player mode: fetch user's own sessions
         dataToRender = await fetchPlayerTrainingSessions(currentUserId);
       }
 
       // Clear existing content after loading
-      container.innerHTML = "";
+      container.innerHTML = '';
 
       // Hide loading spinner
-      hideLoadingSpinner("trainingSessionsContainer");
+      hideLoadingSpinner('trainingSessionsContainer');
 
       // Check if we have training data
       if (!dataToRender || dataToRender.length === 0) {
-        const emptyMessage = isCoachMode ? "" : "";
+        const emptyMessage = isCoachMode ? '' : '';
 
-        showEmptyState("trainingSessionsContainer", {
-          icon: "🏸",
-          title: "No Training Sessions",
+        showEmptyState('trainingSessionsContainer', {
+          icon: '🏸',
+          title: 'No Training Sessions',
           message: emptyMessage,
-          actionText: "+ Add Training Session",
+          actionText: '+ Add Training Session',
           onAction: () => {
             if (window.openLogTrainingModal) {
               window.openLogTrainingModal();
@@ -1152,33 +1172,31 @@ import { checkAuthenticationState } from "./auth-utils.js";
       // Update statistics
       updateTrainingStats(dataToRender);
 
-      console.log(
-        `Loaded and rendered ${sortedSessions.length} training sessions`
-      );
+      console.log(`Loaded and rendered ${sortedSessions.length} training sessions`);
     } catch (error) {
-      console.error("Error loading training sessions:", error);
-      hideLoadingSpinner("trainingSessionsContainer");
+      console.error('Error loading training sessions:', error);
+      hideLoadingSpinner('trainingSessionsContainer');
 
-      showEmptyState("trainingSessionsContainer", {
-        icon: "⚠️",
-        title: "Error Loading Sessions",
+      showEmptyState('trainingSessionsContainer', {
+        icon: '⚠️',
+        title: 'Error Loading Sessions',
         message:
-          error.message === "User not authenticated"
-            ? "Please log in to view your training sessions."
-            : "Unable to load training sessions. Please try refreshing the page.",
+          error.message === 'User not authenticated'
+            ? 'Please log in to view your training sessions.'
+            : 'Unable to load training sessions. Please try refreshing the page.',
       });
     }
   };
 
   // Initialize training page when DOM is ready
-  document.addEventListener("DOMContentLoaded", async function () {
-    console.log("Training page initializing...");
+  document.addEventListener('DOMContentLoaded', async function () {
+    console.log('Training page initializing...');
 
     // Wait for user authentication from sessionStorage
-    const currentUserId = sessionStorage.getItem("currentUserId");
+    const currentUserId = sessionStorage.getItem('currentUserId');
     if (!currentUserId) {
-      console.log("User not authenticated, redirecting to login.");
-      window.location.href = "login.html";
+      console.log('User not authenticated, redirecting to login.');
+      window.location.href = 'login.html';
     } else {
       await initializePage();
     }
@@ -1195,23 +1213,23 @@ import { checkAuthenticationState } from "./auth-utils.js";
       if (isCoachMode) {
         // Coach mode: listen to all sessions for this coach
         q = query(
-          collection(db, "training"),
-          where("coachId", "==", window.currentUser.uid),
-          orderBy("date", "desc")
+          collection(db, 'training'),
+          where('coachId', '==', window.currentUser.uid),
+          orderBy('date', 'desc')
         );
       } else {
         // Player mode: listen to user's own sessions
         q = query(
-          collection(db, "training"),
-          where("playerId", "==", window.currentUser.uid),
-          orderBy("date", "desc")
+          collection(db, 'training'),
+          where('playerId', '==', window.currentUser.uid),
+          orderBy('date', 'desc')
         );
       }
 
       trainingListener = onSnapshot(
         q,
         (snapshot) => {
-          console.log("Real-time update received for training sessions");
+          console.log('Real-time update received for training sessions');
 
           const sessions = snapshot.docs.map((doc) => ({
             id: doc.id,
@@ -1221,13 +1239,13 @@ import { checkAuthenticationState } from "./auth-utils.js";
           // Filter for coach mode if needed
           let filteredSessions = sessions;
           if (isCoachMode) {
-            const dropdown = document.getElementById("playerFilterDropdown");
-            const selectedPlayerId = dropdown ? dropdown.value : "all";
+            const dropdown = document.getElementById('playerFilterDropdown');
+            const selectedPlayerId = dropdown ? dropdown.value : 'all';
 
             if (
               selectedPlayerId &&
-              selectedPlayerId !== "" &&
-              selectedPlayerId !== "all"
+              selectedPlayerId !== '' &&
+              selectedPlayerId !== 'all'
             ) {
               filteredSessions = sessions.filter(
                 (session) => session.playerId === selectedPlayerId
@@ -1239,13 +1257,13 @@ import { checkAuthenticationState } from "./auth-utils.js";
           window.loadTrainingSessions();
         },
         (error) => {
-          console.error("Error in real-time listener:", error);
+          console.error('Error in real-time listener:', error);
         }
       );
 
-      console.log("Real-time listener set up for training sessions");
+      console.log('Real-time listener set up for training sessions');
     } catch (error) {
-      console.error("Error setting up real-time listener:", error);
+      console.error('Error setting up real-time listener:', error);
     }
   }
 
@@ -1254,7 +1272,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
     if (trainingListener) {
       trainingListener();
       trainingListener = null;
-      console.log("Real-time listener cleaned up");
+      console.log('Real-time listener cleaned up');
     }
   }
 
@@ -1265,15 +1283,15 @@ import { checkAuthenticationState } from "./auth-utils.js";
 
     // Check if user is a coach (from URL parameter)
     const urlParams = new URLSearchParams(window.location.search);
-    const userRole = urlParams.get("user");
+    const userRole = urlParams.get('user');
 
     if (
-      userRole === "coach" ||
-      (window.currentUserData && window.currentUserData.role === "coach")
+      userRole === 'coach' ||
+      (window.currentUserData && window.currentUserData.role === 'coach')
     ) {
       // Coach mode: Transform page for management view
       isCoachMode = true;
-      console.log("Coach mode detected - setting up management interface");
+      console.log('Coach mode detected - setting up management interface');
 
       // Hide 'Add New Training' button for coaches
       hideAddButtonForCoach();
@@ -1286,7 +1304,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
     } else {
       // Player mode: Normal functionality
       isCoachMode = false;
-      console.log("Player mode - loading normal training page");
+      console.log('Player mode - loading normal training page');
 
       // Load training sessions using the centralized function
       await window.loadTrainingSessions();
@@ -1298,7 +1316,7 @@ import { checkAuthenticationState } from "./auth-utils.js";
     // Set up real-time listener (stretch goal)
     setupRealtimeListener();
 
-    console.log("Training page initialized successfully");
+    console.log('Training page initialized successfully');
   }
 
   // Hide 'Add New Training' button for coach accounts
@@ -1306,19 +1324,19 @@ import { checkAuthenticationState } from "./auth-utils.js";
     const addButton = document.getElementById('addTrainingBtn');
     if (addButton && window.currentUserData && window.currentUserData.role === 'coach') {
       addButton.classList.add('hidden-for-coach');
-      console.log("Add Training button hidden for coach account.");
+      console.log('Add Training button hidden for coach account.');
     } else if (addButton) {
       // Also check sessionStorage as fallback
-      const userRole = sessionStorage.getItem("userRole");
+      const userRole = sessionStorage.getItem('userRole');
       if (userRole === 'coach') {
         addButton.classList.add('hidden-for-coach');
-        console.log("Add Training button hidden for coach account (via sessionStorage).");
+        console.log('Add Training button hidden for coach account (via sessionStorage).');
       }
     }
   }
 
   // Clean up on page unload
-  window.addEventListener("beforeunload", cleanupRealtimeListener);
+  window.addEventListener('beforeunload', cleanupRealtimeListener);
 
   // Export the filtering function for potential external use
   window.filterTrainingData = filterTrainingData;

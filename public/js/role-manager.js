@@ -2,49 +2,73 @@
 // This script manages user role state across all pages and applies appropriate UI changes
 
 (function () {
-  "use strict";
+  'use strict';
 
-  console.log("Role Manager: Initializing...");
+  console.log('Role Manager: Initializing...');
 
-  // Get current user role from sessionStorage
-  const userRole = sessionStorage.getItem("userRole");
-  const currentUserId = sessionStorage.getItem("currentUserId");
-  const currentUserData = JSON.parse(sessionStorage.getItem("currentUser"));
-  
-  // Ensure currentPage is defined to avoid undefined errors in template literals
-  const currentPage =
-    (window.currentPage && String(window.currentPage)) ||
-    window.location.pathname.split("/").pop() ||
-    "";
+  // Get current user role from multiple sources (prioritize window globals, fallback to sessionStorage)
+  let userRole = sessionStorage.getItem('userRole');
+  let currentUserId = sessionStorage.getItem('currentUserId');
+  let currentUserData = null;
 
-  // Central dashboard navigation function
-  function navigateToDashboard() {
-    const role = sessionStorage.getItem("userRole");
-    if (role === "coach") {
-      window.location.href = "coach-dashboard.html";
-    } else {
-      window.location.href = "player-dashboard.html";
+  // Try to get from window.currentUserData first (set by Firebase auth listener)
+  if (window.currentUserData && window.currentUserData.role) {
+    userRole = window.currentUserData.role;
+    currentUserId = window.currentUserData.id || window.currentUser?.uid;
+    currentUserData = window.currentUserData;
+
+    // Sync to sessionStorage if not already there
+    if (!sessionStorage.getItem('userRole')) {
+      sessionStorage.setItem('userRole', userRole);
+      sessionStorage.setItem('currentUserId', currentUserId);
+      sessionStorage.setItem('currentUser', JSON.stringify(currentUserData));
+    }
+  } else {
+    // Fallback to sessionStorage
+    const storedUser = sessionStorage.getItem('currentUser');
+    if (storedUser) {
+      try {
+        currentUserData = JSON.parse(storedUser);
+      } catch (e) {
+        console.error('Role Manager: Failed to parse stored user data', e);
+      }
     }
   }
 
-  console.log("Role Manager: User role:", userRole);
-  console.log("Role Manager: Current page:", currentPage);
+  // Ensure currentPage is defined to avoid undefined errors in template literals
+  const currentPage =
+    (window.currentPage && String(window.currentPage)) ||
+    window.location.pathname.split('/').pop() ||
+    '';
+
+  // Central dashboard navigation function
+  function navigateToDashboard() {
+    const role = sessionStorage.getItem('userRole');
+    if (role === 'coach') {
+      window.location.href = 'coach-dashboard.html';
+    } else {
+      window.location.href = 'player-dashboard.html';
+    }
+  }
+
+  console.log('Role Manager: User role:', userRole);
+  console.log('Role Manager: Current page:', currentPage);
 
   // Page title mappings for coach mode
   const COACH_PAGE_TITLES = {
-    "training.html": "Manage Training",
-    "matches.html": "Manage Matches",
-    "goals.html": "Manage Goals",
-    "schedule.html": "Team Schedule",
+    'training.html': 'Manage Training',
+    'matches.html': 'Manage Matches',
+    'goals.html': 'Manage Goals',
+    'schedule.html': 'Team Schedule',
   };
 
   // Apply role-based UI changes
   function applyRoleBasedUI() {
-    if (userRole === "coach") {
-      console.log("Role Manager: Applying coach UI...");
+    if (userRole === 'coach') {
+      console.log('Role Manager: Applying coach UI...');
       applyCoachUI();
     } else {
-      console.log("Role Manager: Applying player UI...");
+      console.log('Role Manager: Applying player UI...');
       applyPlayerUI();
     }
   }
@@ -58,7 +82,7 @@
     updatePageTitleForCoach();
 
     // Update user profile display
-    updateUserProfileDisplay("Coach");
+    updateUserProfileDisplay('Coach');
   }
 
   // Apply player-specific UI changes
@@ -67,14 +91,14 @@
     updateSidebarForPlayer();
 
     // Update user profile display
-    updateUserProfileDisplay("Player");
+    updateUserProfileDisplay('Player');
   }
 
   // Update sidebar navigation for coach
   function updateSidebarForCoach() {
-    const sidebar = document.querySelector(".sidebar-nav");
+    const sidebar = document.querySelector('.sidebar-nav');
     if (!sidebar) {
-      console.log("Role Manager: Sidebar navigation not found");
+      console.log('Role Manager: Sidebar navigation not found');
       return;
     }
 
@@ -85,14 +109,14 @@
         <ul class="nav-list">
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "coach-dashboard.html" ? "active" : ""
+              currentPage === 'coach-dashboard.html' ? 'active' : ''
             }" href="coach-dashboard.html">
               Coach Dashboard
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "schedule.html" ? "active" : ""
+              currentPage === 'schedule.html' ? 'active' : ''
             }" href="schedule.html?user=coach">
               Schedule
             </a>
@@ -104,28 +128,28 @@
         <ul class="nav-list">
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "my-players.html" ? "active" : ""
+              currentPage === 'my-players.html' ? 'active' : ''
             }" href="my-players.html">
               My Players
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "training.html" ? "active" : ""
+              currentPage === 'training.html' ? 'active' : ''
             }" href="training.html?user=coach">
               Training
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "matches.html" ? "active" : ""
+              currentPage === 'matches.html' ? 'active' : ''
             }" href="matches.html?user=coach">
               Matches
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "goals.html" ? "active" : ""
+              currentPage === 'goals.html' ? 'active' : ''
             }" href="goals.html?user=coach">
               Goals
             </a>
@@ -137,14 +161,14 @@
         <ul class="nav-list">
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "progress.html" ? "active" : ""
+              currentPage === 'progress.html' ? 'active' : ''
             }" href="progress.html?user=coach">
               Progress
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "achievement.html" ? "active" : ""
+              currentPage === 'achievement.html' ? 'active' : ''
             }" href="achievement.html?user=coach">
               Achievements
             </a>
@@ -153,14 +177,14 @@
       </div>
     `;
 
-    console.log("Role Manager: Coach sidebar navigation applied");
+    console.log('Role Manager: Coach sidebar navigation applied');
   }
 
   // Update sidebar navigation for player
   function updateSidebarForPlayer() {
-    const sidebar = document.querySelector(".sidebar-nav");
+    const sidebar = document.querySelector('.sidebar-nav');
     if (!sidebar) {
-      console.log("Role Manager: Sidebar navigation not found");
+      console.log('Role Manager: Sidebar navigation not found');
       return;
     }
 
@@ -171,28 +195,28 @@
         <ul class="nav-list">
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "player-dashboard.html" ? "active" : ""
+              currentPage === 'player-dashboard.html' ? 'active' : ''
             }" href="player-dashboard.html">
               Dashboard
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "training.html" ? "active" : ""
+              currentPage === 'training.html' ? 'active' : ''
             }" href="training.html">
               Training
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "matches.html" ? "active" : ""
+              currentPage === 'matches.html' ? 'active' : ''
             }" href="matches.html">
               Matches
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "schedule.html" ? "active" : ""
+              currentPage === 'schedule.html' ? 'active' : ''
             }" href="schedule.html">
               Schedule
             </a>
@@ -204,21 +228,21 @@
         <ul class="nav-list">
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "progress.html" ? "active" : ""
+              currentPage === 'progress.html' ? 'active' : ''
             }" href="progress.html">
               Progress
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "achievement.html" ? "active" : ""
+              currentPage === 'achievement.html' ? 'active' : ''
             }" href="achievement.html">
               Achievement
             </a>
           </li>
           <li class="nav-item">
             <a class="nav-link ${
-              currentPage === "goals.html" ? "active" : ""
+              currentPage === 'goals.html' ? 'active' : ''
             }" href="goals.html">
               Goals
             </a>
@@ -227,24 +251,24 @@
       </div>
     `;
 
-    console.log("Role Manager: Player sidebar navigation applied");
+    console.log('Role Manager: Player sidebar navigation applied');
   }
 
   // Update page title for coach mode
   function updatePageTitleForCoach() {
     const pageTitle =
-      document.querySelector(".page-title h1") || document.querySelector("h1");
+      document.querySelector('.page-title h1') || document.querySelector('h1');
     const coachTitle = COACH_PAGE_TITLES[currentPage];
 
     if (pageTitle && coachTitle) {
       pageTitle.textContent = coachTitle;
-      console.log("Role Manager: Page title updated to:", coachTitle);
+      console.log('Role Manager: Page title updated to:', coachTitle);
     }
   }
 
   // Update user profile display
   function updateUserProfileDisplay(roleName) {
-    const userNameElement = document.querySelector(".user-profile .user-name");
+    const userNameElement = document.querySelector('.user-profile .user-name');
     if (userNameElement) {
       // Use the centrally stored user data
       if (currentUserData && currentUserData.name) {
@@ -252,25 +276,23 @@
       } else {
         // Fallback to role-based display
         userNameElement.textContent = roleName;
-        console.log("Role Manager: User profile updated to:", roleName);
+        console.log('Role Manager: User profile updated to:', roleName);
       }
     }
   }
 
   // Personalized user greeting function (integrated from user-greeting.js)
   function updatePersonalizedUserGreeting(userData) {
-    const userNameElement = document.querySelector(".user-profile .user-name");
+    const userNameElement = document.querySelector('.user-profile .user-name');
 
     if (!userNameElement) {
-      console.warn(
-        "Role Manager: User greeting element not found (.user-name)"
-      );
+      console.warn('Role Manager: User greeting element not found (.user-name)');
       return;
     }
 
     if (!userData || !userData.name) {
       console.warn(
-        "Role Manager: Invalid user data provided to updatePersonalizedUserGreeting"
+        'Role Manager: Invalid user data provided to updatePersonalizedUserGreeting'
       );
       userNameElement.innerHTML =
         '<span class="name">User</span> <span class="role">(Unknown)</span>';
@@ -279,10 +301,10 @@
 
     // Extract name components
     const { first, middle, last } = userData.name;
-    const role = userData.role || "user";
+    const role = userData.role || 'user';
 
     // Build full name string
-    let fullName = first || "User";
+    let fullName = first || 'User';
     if (last) {
       fullName += ` ${last}`;
     }
@@ -309,69 +331,88 @@
     }
 
     // Listen for auth state changes from Firebase
-    window.addEventListener("authStateChanged", (event) => {
+    window.addEventListener('authStateChanged', (event) => {
       const { userData } = event.detail;
       if (userData) {
         updatePersonalizedUserGreeting(userData);
+
+        // If role changed or was just set, update the entire UI
+        const previousRole = sessionStorage.getItem('userRole');
+        const newRole = userData.role;
+
+        if (previousRole !== newRole) {
+          console.log(
+            `Role Manager: Role changed from ${previousRole} to ${newRole}, updating UI`
+          );
+
+          // Update sessionStorage
+          sessionStorage.setItem('userRole', newRole);
+          sessionStorage.setItem('currentUserId', userData.id);
+          sessionStorage.setItem('currentUser', JSON.stringify(userData));
+
+          // Re-apply role-based UI
+          if (newRole === 'coach') {
+            applyCoachUI();
+          } else {
+            applyPlayerUI();
+          }
+        }
       } else {
         // Handle signed out state - fallback to role-based display
-        const role = sessionStorage.getItem("userRole");
+        const role = sessionStorage.getItem('userRole');
         if (role) {
-          updateUserProfileDisplay(role === "coach" ? "Coach" : "Player");
+          updateUserProfileDisplay(role === 'coach' ? 'Coach' : 'Player');
         } else {
-          const userNameElement = document.querySelector(
-            ".user-profile .user-name"
-          );
+          const userNameElement = document.querySelector('.user-profile .user-name');
           if (userNameElement) {
-            userNameElement.innerHTML =
-              '<span class="name">Please Login</span>';
+            userNameElement.innerHTML = '<span class="name">Please Login</span>';
           }
         }
       }
     });
 
-    console.log("Role Manager: User greeting system initialized");
+    console.log('Role Manager: User greeting system initialized');
   }
 
   // Handle sign out functionality
   function setupSignOutHandler() {
-    const signOutBtns = document.querySelectorAll(".signout-btn, #signout-btn");
+    const signOutBtns = document.querySelectorAll('.signout-btn, #signout-btn');
     signOutBtns.forEach((btn) => {
-      btn.addEventListener("click", function (e) {
+      btn.addEventListener('click', function (e) {
         e.preventDefault();
 
         // Clear sessionStorage
-        sessionStorage.removeItem("userRole");
-        sessionStorage.removeItem("currentUserId");
-        sessionStorage.removeItem("currentUser");
-        console.log("Role Manager: User data cleared from sessionStorage");
+        sessionStorage.removeItem('userRole');
+        sessionStorage.removeItem('currentUserId');
+        sessionStorage.removeItem('currentUser');
+        console.log('Role Manager: User data cleared from sessionStorage');
 
         // Redirect to login page
-        window.location.href = "login.html";
+        window.location.href = 'login.html';
       });
     });
   }
 
   // Automatic URL parameter injection for coach
   function handleCoachModeURLs() {
-    if (userRole === "coach") {
+    if (userRole === 'coach') {
       const urlParams = new URLSearchParams(window.location.search);
-      const hasCoachParam = urlParams.get("user") === "coach";
+      const hasCoachParam = urlParams.get('user') === 'coach';
 
       // Pages that should have coach parameter
       const coachPages = [
-        "training.html",
-        "matches.html",
-        "goals.html",
-        "schedule.html",
-        "progress.html",
-        "achievement.html",
+        'training.html',
+        'matches.html',
+        'goals.html',
+        'schedule.html',
+        'progress.html',
+        'achievement.html',
       ];
 
       if (coachPages.includes(currentPage) && !hasCoachParam) {
         // Add coach parameter and reload page
         const newUrl = `${window.location.pathname}?user=coach${window.location.hash}`;
-        console.log("Role Manager: Redirecting to coach mode URL:", newUrl);
+        console.log('Role Manager: Redirecting to coach mode URL:', newUrl);
         window.location.replace(newUrl);
         return false; // Prevent further execution
       }
@@ -381,7 +422,7 @@
 
   // Main initialization function
   function initialize() {
-    console.log("Role Manager: Starting initialization...");
+    console.log('Role Manager: Starting initialization...');
 
     // Handle URL redirection for coach mode
     if (!handleCoachModeURLs()) {
@@ -390,18 +431,18 @@
 
     // Wait for DOM to be ready
     function setupLogoNavigation() {
-      var logo = document.getElementById("main-logo-link");
+      var logo = document.getElementById('main-logo-link');
       if (logo) {
-        logo.addEventListener("click", navigateToDashboard);
+        logo.addEventListener('click', navigateToDashboard);
       }
     }
-    if (document.readyState === "loading") {
-      document.addEventListener("DOMContentLoaded", function () {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
         applyRoleBasedUI();
         initializeUserGreeting();
         setupSignOutHandler();
         setupLogoNavigation();
-        console.log("Role Manager: Initialization complete (DOM loaded)");
+        console.log('Role Manager: Initialization complete (DOM loaded)');
       });
     } else {
       // DOM is already ready
@@ -409,7 +450,7 @@
       initializeUserGreeting();
       setupSignOutHandler();
       setupLogoNavigation();
-      console.log("Role Manager: Initialization complete (DOM ready)");
+      console.log('Role Manager: Initialization complete (DOM ready)');
     }
   }
 
@@ -417,13 +458,13 @@
   try {
     initialize();
   } catch (error) {
-    console.error("Role Manager: Error during initialization:", error);
+    console.error('Role Manager: Error during initialization:', error);
     // Fallback to player UI in case of errors
-    if (document.readyState !== "loading") {
+    if (document.readyState !== 'loading') {
       applyPlayerUI();
       initializeUserGreeting();
     } else {
-      document.addEventListener("DOMContentLoaded", function () {
+      document.addEventListener('DOMContentLoaded', function () {
         applyPlayerUI();
         initializeUserGreeting();
       });
@@ -435,7 +476,7 @@
     getCurrentRole: () => userRole,
     refreshUI: applyRoleBasedUI,
     setRole: (role) => {
-      sessionStorage.setItem("userRole", role);
+      sessionStorage.setItem('userRole', role);
       location.reload();
     },
   };

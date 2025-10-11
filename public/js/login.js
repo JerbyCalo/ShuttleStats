@@ -739,6 +739,19 @@ import {
 
         console.log('User created successfully:', userId);
 
+        // Store user data in sessionStorage IMMEDIATELY before redirect
+        sessionStorage.setItem('currentUserId', userId);
+        sessionStorage.setItem('userRole', userData.role);
+        sessionStorage.setItem(
+          'currentUser',
+          JSON.stringify({
+            id: userId,
+            name: userData.name,
+            email: userData.email,
+            role: userData.role,
+          })
+        );
+
         // Show success message
         if (typeof showToast === 'function') {
           showToast(
@@ -749,18 +762,13 @@ import {
           alert(`Account created successfully!\n\nWelcome ${userData.name.first}!`);
         }
 
-        // Reset form and return to login
-        SignUpForm.resetForm();
-        FormToggle.showLogin();
-
-        // Redirect to appropriate dashboard based on role
-        setTimeout(() => {
-          if (userData.role === 'coach') {
-            window.location.href = 'coach-dashboard.html';
-          } else {
-            window.location.href = 'player-dashboard.html';
-          }
-        }, 1000);
+        // Redirect to appropriate dashboard based on role immediately
+        // No need to reset form or show login since we're redirecting
+        if (userData.role === 'coach') {
+          window.location.href = 'coach-dashboard.html';
+        } else {
+          window.location.href = 'player-dashboard.html';
+        }
       } catch (error) {
         console.error('Error creating user:', error);
 
@@ -769,7 +777,8 @@ import {
 
         switch (error.code) {
           case 'auth/email-already-in-use':
-            errorMessage = 'An account with this email address already exists.';
+            errorMessage =
+              "An account with this email address already exists. If you're testing and need to recreate this account, please use the Firebase Console to delete the existing user from Authentication, or try logging in instead.";
             break;
           case 'auth/invalid-email':
             errorMessage = 'Please enter a valid email address.';
@@ -947,7 +956,7 @@ import {
         const userData = userDoc.data();
         console.log('Login successful:', userData);
 
-        // Store user data in session storage
+        // Store user data in session storage BEFORE redirect
         sessionStorage.setItem('currentUserId', userId);
         sessionStorage.setItem('userRole', userData.role);
         sessionStorage.setItem(
@@ -1074,7 +1083,7 @@ import {
           console.log('Existing Google user signed in:', userData);
         }
 
-        // Store user data in session storage
+        // Store user data in session storage BEFORE redirect
         sessionStorage.setItem('currentUserId', user.uid);
         sessionStorage.setItem('userRole', userData.role);
         sessionStorage.setItem(
