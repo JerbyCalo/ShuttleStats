@@ -1,33 +1,55 @@
 // ShuttleStats v2 - Achievement Page Logic
-console.log("achievement.js loaded");
+console.log('achievement.js loaded');
 
 (function () {
+  // Header compression: toggle .header-compressed on scroll
+  function initHeaderCompression() {
+    const header = document.querySelector('.app-header');
+    if (!header) return;
+
+    let ticking = false;
+    const compressThreshold = 60;
+
+    function onScroll() {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const shouldCompress = window.scrollY > compressThreshold;
+          header.classList.toggle('header-compressed', shouldCompress);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
   // Initialize achievement page when DOM is ready
-  document.addEventListener("DOMContentLoaded", function () {
-    console.log("Achievement page initializing...");
+  document.addEventListener('DOMContentLoaded', function () {
+    console.log('Achievement page initializing...');
 
     // Check if user is a coach (from URL parameter)
     const urlParams = new URLSearchParams(window.location.search);
-    const userRole = urlParams.get("user");
+    const userRole = urlParams.get('user');
 
-    if (userRole === "coach") {
+    if (userRole === 'coach') {
       // Coach view: Update page for management view
-      console.log("Coach view detected - switching to management mode");
+      console.log('Coach view detected - switching to management mode');
 
       // Update page title
-      const pageTitle = document.querySelector("h1");
+      const pageTitle = document.querySelector('h1');
       if (pageTitle) {
-        pageTitle.textContent = "Player Achievement Management";
+        pageTitle.textContent = 'Player Achievement Management';
       }
 
       // Update subheading if it exists
-      const subheading = document.querySelector(".subheading");
+      const subheading = document.querySelector('.subheading');
       if (subheading) {
-        subheading.textContent = "Manage achievements for all players";
+        subheading.textContent = 'Manage achievements for all players';
       }
 
       // Replace main content with coach placeholder
-      const mainContent = document.querySelector("#mainContent .page-content");
+      const mainContent = document.querySelector('#mainContent .page-content');
       if (mainContent) {
         mainContent.innerHTML = `
           <h2>Player Achievement Management</h2>
@@ -47,12 +69,19 @@ console.log("achievement.js loaded");
       }
     } else {
       // Player view: Normal functionality
-      console.log("Player view - loading normal achievement page");
+      console.log('Player view - loading normal achievement page');
 
       // For now, just keep the existing content
       // Future: Add player-specific achievement functionality here
     }
 
-    console.log("Achievement page initialized successfully");
+    // Enable compressed header behavior
+    try {
+      initHeaderCompression();
+    } catch (e) {
+      // ignore if header not present yet
+    }
+
+    console.log('Achievement page initialized successfully');
   });
 })();

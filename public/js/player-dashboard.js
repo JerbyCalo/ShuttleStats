@@ -21,6 +21,9 @@ import {
 // Import authentication utilities
 import { checkAuthenticationState } from './auth-utils.js';
 
+// Import timezone utilities for GMT+8 handling
+import { getDateOffsetGMT8, daysAgoGMT8, getCurrentDateGMT8 } from './timezone-utils.js';
+
 (function () {
   function setActiveNav() {
     const dashboardLink = document.getElementById('navDashboard');
@@ -54,9 +57,8 @@ import { checkAuthenticationState } from './auth-utils.js';
 
       console.log('Calculating metrics from Firestore for user:', targetUserId);
 
-      const today = new Date();
-      const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-      const thirtyDaysAgoIso = thirtyDaysAgo.toISOString().split('T')[0];
+      // Get 30 days ago date in GMT+8
+      const thirtyDaysAgoIso = getDateOffsetGMT8(-30);
 
       const resolveCount = async (queries) => {
         if (!queries || queries.length === 0) {
@@ -279,24 +281,20 @@ import { checkAuthenticationState } from './auth-utils.js';
     try {
       const activities = [];
 
-      // Get recent training sessions (last 3)
+      // Get recent training sessions (last 2)
       const recentTrainingQuery = query(
         collection(db, 'training'),
         where('playerId', '==', currentUserId),
         orderBy('date', 'desc'),
-        limit(3)
+        limit(2)
       );
       const trainingSnapshot = await getDocs(recentTrainingQuery);
 
       trainingSnapshot.docs.forEach((doc) => {
         const data = doc.data();
-        const date = new Date(data.date);
-        const daysAgo = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
-        let timestamp;
-
-        if (daysAgo === 0) timestamp = 'Today';
-        else if (daysAgo === 1) timestamp = '1 day ago';
-        else timestamp = `${daysAgo} days ago`;
+        const daysAgo = daysAgoGMT8(data.date);
+        const timestamp =
+          daysAgo === 0 ? 'Today' : daysAgo === 1 ? '1 day ago' : `${daysAgo} days ago`;
 
         activities.push({
           title: `Training Session - ${data.type || 'General'}`,
@@ -317,13 +315,9 @@ import { checkAuthenticationState } from './auth-utils.js';
 
       matchesSnapshot.docs.forEach((doc) => {
         const data = doc.data();
-        const date = new Date(data.date);
-        const daysAgo = Math.floor((new Date() - date) / (1000 * 60 * 60 * 24));
-        let timestamp;
-
-        if (daysAgo === 0) timestamp = 'Today';
-        else if (daysAgo === 1) timestamp = '1 day ago';
-        else timestamp = `${daysAgo} days ago`;
+        const daysAgo = daysAgoGMT8(data.date);
+        const timestamp =
+          daysAgo === 0 ? 'Today' : daysAgo === 1 ? '1 day ago' : `${daysAgo} days ago`;
 
         const result = data.result || 'Completed';
         activities.push({
@@ -338,7 +332,7 @@ import { checkAuthenticationState } from './auth-utils.js';
       activities.sort((a, b) => new Date(b.date) - new Date(a.date));
 
       console.log('Fetched recent activities:', activities);
-      return activities.slice(0, 5); // Return top 5 most recent
+      return activities.slice(0, 3); // Return only top 3 most recent
     } catch (error) {
       console.error('Error fetching recent activities:', error);
       return [];
@@ -875,7 +869,11 @@ import { checkAuthenticationState } from './auth-utils.js';
       const button = document.createElement('button');
       button.className = 'action-card';
       button.type = 'button';
-      button.textContent = actionData.text;
+
+      // Wrap text in span for styling
+      const span = document.createElement('span');
+      span.textContent = actionData.text;
+      button.appendChild(span);
 
       button.addEventListener('click', () => {
         console.log(`Quick action clicked: ${actionData.text}`);
@@ -939,7 +937,7 @@ import { checkAuthenticationState } from './auth-utils.js';
       size: 'small',
     });
 
-    showLocalLoader('recentActivitiesSection', {
+    showLocalLoader('recentActivitiesList', {
       text: 'Loading recent activities...',
       size: 'small',
     });
@@ -964,13 +962,14 @@ import { checkAuthenticationState } from './auth-utils.js';
       // Execute all dashboard setup functions with staggered loading
       setActiveNav();
 
-      // Populate header with current date
-      const today = new Date();
+      // Populate header with current date (GMT+8)
+      const today = getCurrentDateGMT8();
       const dateString = today.toLocaleDateString('en-US', {
         weekday: 'long',
         year: 'numeric',
         month: 'long',
         day: 'numeric',
+        timeZone: 'Asia/Manila',
       });
       populateHeader({ dateString });
 
@@ -985,7 +984,7 @@ import { checkAuthenticationState } from './auth-utils.js';
       // Load activities from Firestore
       const activities = await getRecentActivities(currentUserId);
       populateActivities(activities);
-      hideLoadingSpinner('recentActivitiesSection');
+      hideLoadingSpinner('recentActivitiesList');
 
       // Small delay for better UX
       await simulateNetworkDelay(200);
@@ -1003,7 +1002,7 @@ import { checkAuthenticationState } from './auth-utils.js';
 
       // Hide all loading spinners on error
       hideLoadingSpinner('metricsGrid');
-      hideLoadingSpinner('recentActivitiesSection');
+      hideLoadingSpinner('recentActivitiesList');
       hideLoadingSpinner('quickActionsGrid');
 
       // Show error states
@@ -1027,10 +1026,51 @@ import { checkAuthenticationState } from './auth-utils.js';
       console.log('Player dashboard detected, initializing...');
       window.loadPlayerDashboard();
     }
+    // Initialize header compression behavior regardless of dashboard elements
+    try {
+      initHeaderCompression();
+    } catch (err) {
+      // If the function is not defined yet, we'll define it below and initialize again
+      console.warn('initHeaderCompression not ready yet');
+    }
   });
 
   // Export invitation functions to global scope
   window.acceptCoachInvitation = acceptCoachInvitation;
   window.declineCoachInvitation = declineCoachInvitation;
   window.checkPendingInvitations = checkPendingInvitations;
+  // Header compression: toggle .header-compressed on .app-header when scrolling down
+  function initHeaderCompression() {
+    const header = document.querySelector('.app-header');
+    if (!header) return;
+
+    let lastKnownScrollY = window.scrollY || window.pageYOffset;
+    let ticking = false;
+    const compressThreshold = 60; // px scrolled before compressing
+
+    function onScroll() {
+      lastKnownScrollY = window.scrollY || window.pageYOffset;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updateHeader(lastKnownScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    function updateHeader(scrollY) {
+      if (scrollY > compressThreshold) {
+        header.classList.add('header-compressed');
+      } else {
+        header.classList.remove('header-compressed');
+      }
+    }
+
+    // Attach listener
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Run once to set initial state
+    updateHeader(window.scrollY || window.pageYOffset);
+  }
 })();

@@ -11,38 +11,40 @@ import {
   where,
   orderBy,
   getDocs,
-} from "../config/firebase-config.js";
+} from '../config/firebase-config.js';
+
+// Import timezone utilities for GMT+8 handling
+import { getDateOffsetGMT8, displayDateGMT8, parseDateAsGMT8 } from './timezone-utils.js';
+
+// Flag to prevent multiple initialization of player selector
+let playerSelectorInitialized = false;
 
 /**
  * Calculate and render Training Commitment KPI
  * @param {Array} trainingData - Array of training data
  */
 function renderTrainingCommitmentKPI(trainingData) {
-  const card = document.getElementById("training-commitment-card");
-  const valueElement = card.querySelector(".kpi-value");
-  const progressFill = card.querySelector(".kpi-progress-fill");
+  const card = document.getElementById('training-commitment-card');
+  const valueElement = card.querySelector('.kpi-value');
+  const progressFill = card.querySelector('.kpi-progress-fill');
 
   if (!trainingData || trainingData.length === 0) {
-    valueElement.textContent = "--";
-    progressFill.style.width = "0%";
+    valueElement.textContent = '--';
+    progressFill.style.width = '0%';
     return;
   }
 
-  // Calculate last 30 days training commitment
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  // Calculate last 30 days training commitment (using GMT+8)
+  const thirtyDaysAgoIso = getDateOffsetGMT8(-30);
 
   const recentSessions = trainingData.filter(
-    (session) => new Date(session.date) >= thirtyDaysAgo
+    (session) => session.date >= thirtyDaysAgoIso
   );
 
   // Target: 12 sessions per month (3 per week)
   const targetSessions = 12;
   const actualSessions = recentSessions.length;
-  const percentage = Math.min(
-    Math.round((actualSessions / targetSessions) * 100),
-    100
-  );
+  const percentage = Math.min(Math.round((actualSessions / targetSessions) * 100), 100);
 
   valueElement.textContent = `${percentage}%`;
   progressFill.style.width = `${percentage}%`;
@@ -53,22 +55,22 @@ function renderTrainingCommitmentKPI(trainingData) {
  * @param {Array} goalsData - Array of goals data
  */
 function renderCurrentFocusKPI(goalsData) {
-  const card = document.getElementById("current-focus-card");
-  const valueElement = card.querySelector(".kpi-value");
-  const secondaryElement = card.querySelector(".kpi-secondary");
+  const card = document.getElementById('current-focus-card');
+  const valueElement = card.querySelector('.kpi-value');
+  const secondaryElement = card.querySelector('.kpi-secondary');
 
   if (!goalsData || goalsData.length === 0) {
-    valueElement.textContent = "--";
-    secondaryElement.textContent = "No goals set";
+    valueElement.textContent = '--';
+    secondaryElement.textContent = 'No goals set';
     return;
   }
 
   // Find most common category from active goals
-  const activeGoals = goalsData.filter((goal) => goal.status !== "Completed");
+  const activeGoals = goalsData.filter((goal) => goal.status !== 'Completed');
 
   if (activeGoals.length === 0) {
-    valueElement.textContent = "Complete!";
-    secondaryElement.textContent = "All goals achieved";
+    valueElement.textContent = 'Complete!';
+    secondaryElement.textContent = 'All goals achieved';
     return;
   }
 
@@ -90,21 +92,21 @@ function renderCurrentFocusKPI(goalsData) {
  * @param {Array} trainingData - Array of training data
  */
 function renderRecentTraining(trainingData) {
-  const container = document.getElementById("recent-training-container");
-  const contentDiv = container.querySelector(".section-content");
+  const container = document.getElementById('recent-training-container');
+  const contentDiv = container.querySelector('.section-content');
 
   if (!trainingData || trainingData.length === 0) {
-    showEmptyState("recent-training-container", {
-      icon: "🏸",
-      title: "No Training Sessions",
-      message: "No recent training sessions found for this player.",
+    showEmptyState('recent-training-container', {
+      icon: '🏸',
+      title: 'No Training Sessions',
+      message: 'No recent training sessions found for this player.',
     });
     return;
   }
 
   // Sort by date (newest first) and take first 3
   const recentTraining = trainingData
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => (b.date > a.date ? 1 : -1))
     .slice(0, 3);
 
   const trainingHTML = recentTraining
@@ -113,9 +115,11 @@ function renderRecentTraining(trainingData) {
     <div class="training-item">
       <div class="item-header">
         <h4 class="item-title">${training.type}</h4>
-        <span class="item-date">${new Date(
-          training.date
-        ).toLocaleDateString()}</span>
+        <span class="item-date">${displayDateGMT8(training.date, {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })}</span>
       </div>
       <div class="item-details">
         <p><strong>Duration:</strong> ${training.duration} minutes</p>
@@ -124,13 +128,13 @@ function renderRecentTraining(trainingData) {
         ${
           training.coachComments
             ? `<p><strong>Notes:</strong> ${training.coachComments}</p>`
-            : ""
+            : ''
         }
       </div>
     </div>
   `
     )
-    .join("");
+    .join('');
 
   contentDiv.innerHTML = trainingHTML;
 }
@@ -140,21 +144,21 @@ function renderRecentTraining(trainingData) {
  * @param {Array} matchesData - Array of matches data
  */
 function renderUpcomingMatches(matchesData) {
-  const container = document.getElementById("upcoming-matches-container");
-  const contentDiv = container.querySelector(".section-content");
+  const container = document.getElementById('upcoming-matches-container');
+  const contentDiv = container.querySelector('.section-content');
 
   if (!matchesData || matchesData.length === 0) {
-    showEmptyState("upcoming-matches-container", {
-      icon: "🏆",
-      title: "No Matches",
-      message: "No matches found for this player.",
+    showEmptyState('upcoming-matches-container', {
+      icon: '🏆',
+      title: 'No Matches',
+      message: 'No matches found for this player.',
     });
     return;
   }
 
   // For demo purposes, show recent matches since we don't have future dates
   const recentMatches = matchesData
-    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .sort((a, b) => (b.date > a.date ? 1 : -1))
     .slice(0, 2);
 
   const matchesHTML = recentMatches
@@ -163,25 +167,27 @@ function renderUpcomingMatches(matchesData) {
     <div class="match-item">
       <div class="item-header">
         <h4 class="item-title">vs ${match.opponent}</h4>
-        <span class="item-date">${new Date(
-          match.date
-        ).toLocaleDateString()}</span>
+        <span class="item-date">${displayDateGMT8(match.date, {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })}</span>
       </div>
       <div class="item-details">
         <p><strong>Type:</strong> ${match.matchType}</p>
         <p><strong>Score:</strong> ${match.yourScore}-${match.opponentScore}${
-        match.yourScore2 ? `, ${match.yourScore2}-${match.opponentScore2}` : ""
-      }</p>
+          match.yourScore2 ? `, ${match.yourScore2}-${match.opponentScore2}` : ''
+        }</p>
         <p><strong>Result:</strong> <span class="status-badge status-${match.result.toLowerCase()}">${
-        match.result
-      }</span></p>
+          match.result
+        }</span></p>
         <p><strong>Duration:</strong> ${match.duration} minutes</p>
-        ${match.notes ? `<p><strong>Notes:</strong> ${match.notes}</p>` : ""}
+        ${match.notes ? `<p><strong>Notes:</strong> ${match.notes}</p>` : ''}
       </div>
     </div>
   `
     )
-    .join("");
+    .join('');
 
   contentDiv.innerHTML = matchesHTML;
 }
@@ -191,31 +197,31 @@ function renderUpcomingMatches(matchesData) {
  * @param {Array} goalsData - Array of goals data
  */
 function renderCurrentGoals(goalsData) {
-  const container = document.getElementById("current-goals-container");
-  const contentDiv = container.querySelector(".section-content");
+  const container = document.getElementById('current-goals-container');
+  const contentDiv = container.querySelector('.section-content');
 
   if (!goalsData || goalsData.length === 0) {
-    showEmptyState("current-goals-container", {
-      icon: "🎯",
-      title: "No Goals",
-      message: "No goals found for this player.",
+    showEmptyState('current-goals-container', {
+      icon: '🎯',
+      title: 'No Goals',
+      message: 'No goals found for this player.',
     });
     return;
   }
 
   // Filter for incomplete goals and sort by priority
   const activeGoals = goalsData
-    .filter((goal) => goal.status !== "Completed")
+    .filter((goal) => goal.status !== 'Completed')
     .sort((a, b) => {
       const priorityOrder = { High: 3, Medium: 2, Low: 1 };
       return priorityOrder[b.priority] - priorityOrder[a.priority];
     });
 
   if (activeGoals.length === 0) {
-    showEmptyState("current-goals-container", {
-      icon: "🎉",
-      title: "All Goals Completed!",
-      message: "This player has achieved all their goals. Great work!",
+    showEmptyState('current-goals-container', {
+      icon: '🎉',
+      title: 'All Goals Completed!',
+      message: 'This player has achieved all their goals. Great work!',
     });
     return;
   }
@@ -228,13 +234,15 @@ function renderCurrentGoals(goalsData) {
         <h4 class="item-title">${goal.title}</h4>
         <span class="status-badge status-${goal.status
           .toLowerCase()
-          .replace(" ", "-")}">${goal.status}</span>
+          .replace(' ', '-')}">${goal.status}</span>
       </div>
       <div class="item-details">
         <p>${goal.description}</p>
-        <p><strong>Target Date:</strong> ${new Date(
-          goal.targetDate
-        ).toLocaleDateString()}</p>
+        <p><strong>Target Date:</strong> ${displayDateGMT8(goal.targetDate, {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        })}</p>
         <p><strong>Priority:</strong> ${goal.priority}</p>
         <div class="goal-progress">
           <div class="progress-bar">
@@ -242,12 +250,12 @@ function renderCurrentGoals(goalsData) {
           </div>
           <span class="progress-text">${goal.progress}%</span>
         </div>
-        ${goal.notes ? `<p><strong>Notes:</strong> ${goal.notes}</p>` : ""}
+        ${goal.notes ? `<p><strong>Notes:</strong> ${goal.notes}</p>` : ''}
       </div>
     </div>
   `
     )
-    .join("");
+    .join('');
 
   contentDiv.innerHTML = goalsHTML;
 }
@@ -257,14 +265,14 @@ function renderCurrentGoals(goalsData) {
  */
 function showLoadingState() {
   const sections = [
-    "recent-training-container",
-    "upcoming-matches-container",
-    "current-goals-container",
+    'recent-training-container',
+    'upcoming-matches-container',
+    'current-goals-container',
   ];
 
   sections.forEach((sectionId) => {
     const container = document.getElementById(sectionId);
-    const contentDiv = container.querySelector(".section-content");
+    const contentDiv = container.querySelector('.section-content');
     contentDiv.innerHTML = `
       <div class="loading-state">
         <div class="loading-spinner"></div>
@@ -290,24 +298,24 @@ async function updateDashboardUI(playerId) {
   }
 
   if (!window.currentUser) {
-    console.warn("No authenticated user for updating dashboard");
+    console.warn('No authenticated user for updating dashboard');
     return;
   }
 
   // Show loading spinners for all sections
-  showLocalLoader("recent-training-container", {
-    text: "Loading training data...",
-    size: "small",
+  showLocalLoader('recent-training-container', {
+    text: 'Loading training data...',
+    size: 'small',
   });
 
-  showLocalLoader("upcoming-matches-container", {
-    text: "Loading matches...",
-    size: "small",
+  showLocalLoader('upcoming-matches-container', {
+    text: 'Loading matches...',
+    size: 'small',
   });
 
-  showLocalLoader("current-goals-container", {
-    text: "Loading goals...",
-    size: "small",
+  showLocalLoader('current-goals-container', {
+    text: 'Loading goals...',
+    size: 'small',
   });
 
   try {
@@ -320,48 +328,48 @@ async function updateDashboardUI(playerId) {
 
     // Staggered loading of sections for better UX
     renderRecentTraining(playerData.training);
-    hideLoadingSpinner("recent-training-container");
+    hideLoadingSpinner('recent-training-container');
 
     await simulateNetworkDelay(200);
 
     renderUpcomingMatches(playerData.matches);
-    hideLoadingSpinner("upcoming-matches-container");
+    hideLoadingSpinner('upcoming-matches-container');
 
     await simulateNetworkDelay(200);
 
     renderCurrentGoals(playerData.goals);
-    hideLoadingSpinner("current-goals-container");
+    hideLoadingSpinner('current-goals-container');
 
-    console.log("Dashboard UI updated for player:", playerId);
+    console.log('Dashboard UI updated for player:', playerId);
   } catch (error) {
-    console.error("Error updating dashboard UI:", error);
+    console.error('Error updating dashboard UI:', error);
 
     // Hide loading spinners on error
-    hideLoadingSpinner("recent-training-container");
-    hideLoadingSpinner("upcoming-matches-container");
-    hideLoadingSpinner("current-goals-container");
+    hideLoadingSpinner('recent-training-container');
+    hideLoadingSpinner('upcoming-matches-container');
+    hideLoadingSpinner('current-goals-container');
 
     // Show error states
     const errorMessage =
-      error.code === "permission-denied"
+      error.code === 'permission-denied'
         ? "You don't have permission to view this player's data."
-        : "Unable to load player data. Please try refreshing the page.";
+        : 'Unable to load player data. Please try refreshing the page.';
 
-    showEmptyState("recent-training-container", {
-      icon: "⚠️",
-      title: "Error Loading Training",
+    showEmptyState('recent-training-container', {
+      icon: '⚠️',
+      title: 'Error Loading Training',
       message: errorMessage,
     });
 
-    showEmptyState("upcoming-matches-container", {
-      icon: "⚠️",
-      title: "Error Loading Matches",
+    showEmptyState('upcoming-matches-container', {
+      icon: '⚠️',
+      title: 'Error Loading Matches',
       message: errorMessage,
     });
 
-    showEmptyState("current-goals-container", {
-      icon: "⚠️",
-      title: "Error Loading Goals",
+    showEmptyState('current-goals-container', {
+      icon: '⚠️',
+      title: 'Error Loading Goals',
       message: errorMessage,
     });
   }
@@ -375,9 +383,7 @@ async function updateDashboardUI(playerId) {
 async function getPlayerData(playerId) {
   // Validate playerId parameter
   if (!playerId || !window.currentUser) {
-    console.warn(
-      "getPlayerData called with empty playerId or no authenticated user"
-    );
+    console.warn('getPlayerData called with empty playerId or no authenticated user');
     return {
       training: [],
       matches: [],
@@ -390,10 +396,10 @@ async function getPlayerData(playerId) {
 
     // Get training data
     const trainingQuery = query(
-      collection(db, "training"),
-      where("playerId", "==", playerId),
-      where("coachId", "==", window.currentUser.uid),
-      orderBy("date", "desc")
+      collection(db, 'training'),
+      where('playerId', '==', playerId),
+      where('coachId', '==', window.currentUser.uid),
+      orderBy('date', 'desc')
     );
     const trainingSnapshot = await getDocs(trainingQuery);
     const trainingData = trainingSnapshot.docs.map((doc) => ({
@@ -403,10 +409,10 @@ async function getPlayerData(playerId) {
 
     // Get matches data
     const matchesQuery = query(
-      collection(db, "matches"),
-      where("playerId", "==", playerId),
-      where("coachId", "==", window.currentUser.uid),
-      orderBy("date", "desc")
+      collection(db, 'matches'),
+      where('playerId', '==', playerId),
+      where('coachId', '==', window.currentUser.uid),
+      orderBy('date', 'desc')
     );
     const matchesSnapshot = await getDocs(matchesQuery);
     const matchesData = matchesSnapshot.docs.map((doc) => ({
@@ -416,10 +422,10 @@ async function getPlayerData(playerId) {
 
     // Get goals data
     const goalsQuery = query(
-      collection(db, "goals"),
-      where("playerId", "==", playerId),
-      where("coachId", "==", window.currentUser.uid),
-      orderBy("targetDate", "asc")
+      collection(db, 'goals'),
+      where('playerId', '==', playerId),
+      where('coachId', '==', window.currentUser.uid),
+      orderBy('targetDate', 'asc')
     );
     const goalsSnapshot = await getDocs(goalsQuery);
     const goalsData = goalsSnapshot.docs.map((doc) => ({
@@ -428,9 +434,9 @@ async function getPlayerData(playerId) {
     }));
 
     console.log(`Fetched data for player ${playerId}:`, {
-      training: trainingData.length + " records",
-      matches: matchesData.length + " records",
-      goals: goalsData.length + " records",
+      training: trainingData.length + ' records',
+      matches: matchesData.length + ' records',
+      goals: goalsData.length + ' records',
     });
 
     return {
@@ -439,7 +445,7 @@ async function getPlayerData(playerId) {
       goals: goalsData,
     };
   } catch (error) {
-    console.error("Error fetching player data from Firestore:", error);
+    console.error('Error fetching player data from Firestore:', error);
 
     // Return empty data on error
     return {
@@ -454,18 +460,27 @@ async function getPlayerData(playerId) {
  * Load and populate the player selector dropdown
  */
 async function loadPlayerSelector() {
+  // Prevent multiple initializations
+  if (playerSelectorInitialized) {
+    console.log('Player selector already initialized, skipping...');
+    return;
+  }
+
   // Get the player selector element
-  const playerSelector = document.getElementById("playerSelector");
+  const playerSelector = document.getElementById('playerSelector');
 
   if (!playerSelector) {
-    console.error("Player selector element not found");
+    console.error('Player selector element not found');
     return;
   }
 
   if (!window.currentUser) {
-    console.warn("No authenticated user for loading player selector");
+    console.warn('No authenticated user for loading player selector');
     return;
   }
+
+  // Mark as initialized before starting async operations
+  playerSelectorInitialized = true;
 
   // Clear existing options (except the default one)
   playerSelector.innerHTML = '<option value="">-- Choose a player --</option>';
@@ -473,90 +488,158 @@ async function loadPlayerSelector() {
   try {
     // Fetch coach's players from Firestore
     const coachPlayersQuery = query(
-      collection(db, "coach_players"),
-      where("coachId", "==", window.currentUser.uid),
-      where("status", "==", "accepted")
+      collection(db, 'coach_players'),
+      where('coachId', '==', window.currentUser.uid),
+      where('status', '==', 'accepted')
     );
 
     const coachPlayersSnapshot = await getDocs(coachPlayersQuery);
 
     if (coachPlayersSnapshot.empty) {
-      console.log("No players found for this coach");
-      const option = document.createElement("option");
+      console.log('No players found for this coach');
+      const option = document.createElement('option');
       option.disabled = true;
-      option.textContent = "No players assigned";
+      option.textContent = 'No players assigned';
       playerSelector.appendChild(option);
       return;
     }
 
     // Get full user details for each player
-    const playerPromises = coachPlayersSnapshot.docs.map(
-      async (relationDoc) => {
-        const relation = relationDoc.data();
+    const playerPromises = coachPlayersSnapshot.docs.map(async (relationDoc) => {
+      const relation = relationDoc.data();
 
-        // For now, we'll use the player data from the relationship
-        // In a full implementation, you'd fetch from users collection
-        return {
-          id: relation.playerId,
-          name: relation.playerName,
-          email: relation.playerEmail,
-        };
-      }
-    );
+      // For now, we'll use the player data from the relationship
+      // In a full implementation, you'd fetch from users collection
+      return {
+        id: relation.playerId,
+        name: relation.playerName,
+        email: relation.playerEmail,
+      };
+    });
 
     const players = await Promise.all(playerPromises);
 
-    // Populate the dropdown with player options
+    // Deduplicate players by playerId (primary) and email (fallback) to avoid repeated names
+    const uniquePlayersMap = new Map();
+
     players.forEach((player) => {
-      const option = document.createElement("option");
+      const normalizedId = player.id ? player.id.trim() : '';
+      const normalizedEmail = player.email ? player.email.trim().toLowerCase() : '';
+
+      // Skip invalid entries
+      if (!normalizedId || !normalizedEmail) {
+        console.warn('Skipping invalid player entry:', player);
+        return;
+      }
+
+      // Use playerId as the primary key for deduplication
+      if (!uniquePlayersMap.has(normalizedId)) {
+        uniquePlayersMap.set(normalizedId, {
+          id: normalizedId,
+          name: player.name,
+          email: normalizedEmail,
+        });
+      } else {
+        console.warn('Duplicate coach-player relation detected for player:', {
+          playerName: player.name,
+          playerId: normalizedId,
+          playerEmail: normalizedEmail,
+        });
+      }
+    });
+
+    // Convert map to array and sort by name
+    const uniquePlayers = Array.from(uniquePlayersMap.values()).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    // Populate the dropdown with player options
+    uniquePlayers.forEach((player) => {
+      const option = document.createElement('option');
       option.value = player.id;
       option.textContent = player.name;
       playerSelector.appendChild(option);
     });
 
-    console.log("Player selector loaded with", players.length, "players");
+    if (uniquePlayers.length !== players.length) {
+      console.info(
+        `Filtered ${players.length - uniquePlayers.length} duplicate player entries before rendering selector.`
+      );
+    }
+
+    console.log('Player selector loaded with', uniquePlayers.length, 'players');
   } catch (error) {
-    console.error("Error loading player selector:", error);
-    const option = document.createElement("option");
+    console.error('Error loading player selector:', error);
+    playerSelectorInitialized = false; // Reset flag on error to allow retry
+    const option = document.createElement('option');
     option.disabled = true;
-    option.textContent = "Error loading players";
+    option.textContent = 'Error loading players';
     playerSelector.appendChild(option);
+    return;
   }
 
-  // Add event listener for selection changes
-  playerSelector.addEventListener("change", (event) => {
+  // Remove any existing event listener to prevent duplicates
+  // Clone and replace the element to remove all listeners
+  const newPlayerSelector = playerSelector.cloneNode(true);
+  playerSelector.parentNode.replaceChild(newPlayerSelector, playerSelector);
+
+  // Add event listener for selection changes (only once)
+  newPlayerSelector.addEventListener('change', (event) => {
     const selectedPlayerId = event.target.value;
-    console.log("Selected player:", selectedPlayerId);
+    console.log('Selected player:', selectedPlayerId);
 
     // Also log the player name for debugging
     const selectedOption = event.target.options[event.target.selectedIndex];
     if (selectedPlayerId) {
-      console.log("Selected player name:", selectedOption.textContent);
+      console.log('Selected player name:', selectedOption.textContent);
 
       // Update the dashboard UI with the selected player's data
       updateDashboardUI(selectedPlayerId);
     } else {
-      console.log("No player selected");
+      console.log('No player selected');
       // Clear the dashboard when no player is selected
       updateDashboardUI(null);
     }
   });
 }
 
+// Header compression: toggles .header-compressed on .app-header when scrolling
+function initHeaderCompression() {
+  const header = document.querySelector('.app-header');
+  if (!header) return;
+
+  let ticking = false;
+  const compressThreshold = 60;
+
+  function onScroll() {
+    if (!ticking) {
+      window.requestAnimationFrame(() => {
+        const shouldCompress = window.scrollY > compressThreshold;
+        header.classList.toggle('header-compressed', shouldCompress);
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
 /**
  * Initialize the coach dashboard when DOM is loaded
  */
-document.addEventListener("DOMContentLoaded", function () {
-  console.log("Coach dashboard initializing...");
+document.addEventListener('DOMContentLoaded', function () {
+  console.log('Coach dashboard initializing...');
 
   // Wait for user authentication
   if (!window.currentUser) {
-    console.log("Waiting for user authentication...");
+    console.log('Waiting for user authentication...');
 
     // Listen for auth state changes
-    window.addEventListener("authStateChanged", async function (event) {
+    window.addEventListener('authStateChanged', async function (event) {
       if (event.detail.user) {
-        console.log("User authenticated, loading player selector");
+        console.log('User authenticated, loading player selector');
         await loadPlayerSelector();
       }
     });
@@ -571,5 +654,11 @@ document.addEventListener("DOMContentLoaded", function () {
     loadPlayerSelector();
   }
 
-  console.log("Coach dashboard initialized");
+  console.log('Coach dashboard initialized');
+  // Enable header compression
+  try {
+    initHeaderCompression();
+  } catch (e) {
+    /* ignore */
+  }
 });

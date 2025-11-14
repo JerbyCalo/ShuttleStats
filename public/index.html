@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -42,70 +42,138 @@
 
     <!-- Hero Section -->
     <section class="hero">
+      <div class="hero-background">
+        <div class="hero-circle hero-circle-1"></div>
+        <div class="hero-circle hero-circle-2"></div>
+        <div class="hero-circle hero-circle-3"></div>
+      </div>
       <div class="hero-content">
+        <div class="hero-badge">🏸 Performance Tracking Platform</div>
         <h1 class="hero-title">Elevate Your Badminton Training</h1>
         <p class="hero-subtitle">
           Make training and performance tracking more organized, efficient, and
           data-driven for the badminton community.
         </p>
         <div class="hero-buttons">
-          <a href="#features" class="btn btn-primary">Explore Features</a>
-          <a href="login.html" class="btn btn-secondary">Get Started</a>
+          <a href="login.html" class="btn btn-primary">
+            <span>Get Started</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 10H16M16 10L11 5M16 10L11 15"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+          <a href="#features" class="btn btn-secondary">
+            <span>Explore Features</span>
+          </a>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat">
+            <div class="hero-stat-number">0</div>
+            <div class="hero-stat-label">Active Users</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-number">0</div>
+            <div class="hero-stat-label">Training Sessions</div>
+          </div>
+          <div class="hero-stat">
+            <div class="hero-stat-number">0</div>
+            <div class="hero-stat-label">Satisfaction</div>
+          </div>
         </div>
       </div>
       <div class="hero-visual">
-        <div class="shuttlecock">🏸</div>
+        <div class="shuttlecock-container">
+          <div class="shuttlecock">🏸</div>
+          <div class="shuttlecock-trail"></div>
+        </div>
       </div>
     </section>
 
     <!-- Features Section -->
     <section id="features" class="features-section">
       <div class="container">
-        <h2>Key Features</h2>
+        <div class="section-header">
+          <h2>Powerful Features for Athletes & Coaches</h2>
+          <p>
+            Everything you need to track, analyze, and improve your badminton performance
+          </p>
+        </div>
         <div class="features-grid">
           <div class="feature-card">
-            <div class="feature-icon circle">
-              <img
-                src="assets/icons/user-dashboard.svg"
-                alt="User Accounts & Dashboards"
-              />
+            <div class="feature-icon-wrapper">
+              <div class="feature-icon circle">
+                <img
+                  src="assets/icons/user-dashboard.svg"
+                  alt="User Accounts & Dashboards"
+                />
+              </div>
             </div>
             <h3>User Accounts & Dashboards</h3>
-            <p>Separate views for coaches and players.</p>
+            <p>
+              Separate views for coaches and players with personalized insights and
+              analytics.
+            </p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon circle">
-              <img
-                src="assets/icons/training-match.svg"
-                alt="Training & Match Tracking"
-              />
+            <div class="feature-icon-wrapper">
+              <div class="feature-icon circle">
+                <img
+                  src="assets/icons/training-match.svg"
+                  alt="Training & Match Tracking"
+                />
+              </div>
             </div>
             <h3>Training & Match Tracking</h3>
-            <p>Log sessions, matches, and progress.</p>
+            <p>
+              Log sessions, matches, and progress with detailed metrics and performance
+              data.
+            </p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon circle">
-              <img
-                src="assets/icons/schedule.svg"
-                alt="Scheduling & Reminders"
-              />
+            <div class="feature-icon-wrapper">
+              <div class="feature-icon circle">
+                <img src="assets/icons/schedule.svg" alt="Scheduling & Reminders" />
+              </div>
             </div>
             <h3>Scheduling & Reminders</h3>
-            <p>Manage training schedules with notifications.</p>
+            <p>
+              Manage training schedules with smart notifications and calendar integration.
+            </p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon circle">
-              <img src="assets/icons/reports.svg" alt="Performance Reports" />
+            <div class="feature-icon-wrapper">
+              <div class="feature-icon circle">
+                <img src="assets/icons/reports.svg" alt="Performance Reports" />
+              </div>
             </div>
             <h3>Performance Reports</h3>
-            <p>Generate and share progress summaries.</p>
+            <p>
+              Generate comprehensive progress summaries with visual analytics and
+              insights.
+            </p>
           </div>
           <div class="feature-card">
-            <div class="feature-icon circle">
-              <img src="assets/icons/feedback.svg" alt="Feedback System" />
+            <div class="feature-icon-wrapper">
+              <div class="feature-icon circle">
+                <img src="assets/icons/feedback.svg" alt="Feedback System" />
+              </div>
             </div>
             <h3>Feedback System</h3>
-            <p>Coaches give structured feedback to players.</p>
+            <p>
+              Coaches provide structured feedback with actionable recommendations for
+              players.
+            </p>
           </div>
         </div>
       </div>
@@ -114,41 +182,171 @@
     <!-- About Section -->
     <section id="about" class="about-section">
       <div class="container">
-        <h2>About ShuttleStats</h2>
-        <p>
-          ShuttleStats is a web-based system built for the badminton community,
-          designed to help coaches and players track training, monitor
-          performance, and manage schedules in one platform. Instead of relying
-          on notebooks or verbal feedback, the system provides role-based
-          dashboards, structured tracking, and data-driven reports that improve
-          communication and support player development.
-        </p>
+        <div class="about-content">
+          <div class="about-image">
+            <div class="about-card about-card-1">
+              <div class="about-card-icon">📊</div>
+              <div class="about-card-text">Performance Analytics</div>
+            </div>
+            <div class="about-card about-card-2">
+              <div class="about-card-icon">🎯</div>
+              <div class="about-card-text">Goal Tracking</div>
+            </div>
+            <div class="about-card about-card-3">
+              <div class="about-card-icon">👥</div>
+              <div class="about-card-text">Team Management</div>
+            </div>
+          </div>
+          <div class="about-text">
+            <h2>About ShuttleStats</h2>
+            <p>
+              ShuttleStats is a web-based system built for the badminton community,
+              designed to help coaches and players track training, monitor performance,
+              and manage schedules in one platform.
+            </p>
+            <p>
+              Instead of relying on notebooks or verbal feedback, the system provides
+              role-based dashboards, structured tracking, and data-driven reports that
+              improve communication and support player development.
+            </p>
+            <ul class="about-highlights">
+              <li>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M16.667 5L7.5 14.167L3.333 10"
+                    stroke="#1211ca"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>Real-time performance insights</span>
+              </li>
+              <li>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M16.667 5L7.5 14.167L3.333 10"
+                    stroke="#1211ca"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>Seamless coach-player collaboration</span>
+              </li>
+              <li>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M16.667 5L7.5 14.167L3.333 10"
+                    stroke="#1211ca"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <span>Data-driven training decisions</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Contact Section -->
     <section id="contact" class="contact-section">
       <div class="container">
-        <h2>Contact</h2>
-        <p>
-          Have feedback or questions? Reach us at
-          <a href="mailto:support@shuttlestats.app">support@shuttlestats.app</a
-          >.
-        </p>
+        <div class="contact-container">
+          <div class="contact-info">
+            <h2>Get in Touch</h2>
+            <p class="contact-description">
+              Have feedback or questions? We'd love to hear from you and help with any
+              inquiries.
+            </p>
+            <div class="contact-methods">
+              <div class="contact-method">
+                <div class="contact-method-icon">
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M3 8L10.89 13.26C11.22 13.47 11.61 13.59 12 13.59C12.39 13.59 12.78 13.47 13.11 13.26L21 8M5 19H19C20.1 19 21 18.1 21 17V7C21 5.9 20.1 5 19 5H5C3.9 5 3 5.9 3 7V17C3 18.1 3.9 19 5 19Z"
+                      stroke="#1211ca"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </div>
+                <div class="contact-method-text">
+                  <h4>Email</h4>
+                  <a href="mailto:support@shuttlestats.app">support@shuttlestats.app</a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="contact-visual">
+            <div class="contact-circle contact-circle-1"></div>
+            <div class="contact-circle contact-circle-2"></div>
+            <div class="contact-emoji">📧</div>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- CTA Section -->
     <section class="cta-section">
+      <div class="cta-background">
+        <div class="cta-circle cta-circle-1"></div>
+        <div class="cta-circle cta-circle-2"></div>
+      </div>
       <div class="container">
-        <h2>Ready to Transform Your Badminton Training?</h2>
-        <p>
-          Join thousands of players and coaches who are already using
-          ShuttleStats to improve their game.
-        </p>
-        <a href="login.html" class="btn btn-primary btn-large"
-          >Get Started Today</a
-        >
+        <div class="cta-content">
+          <h2>Ready to Transform Your Badminton Training?</h2>
+          <p>
+            Join thousands of players and coaches who are already using ShuttleStats to
+            improve their game.
+          </p>
+          <a href="login.html" class="btn btn-primary btn-large btn-cta">
+            <span>Get Started Today</span>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M4 10H16M16 10L11 5M16 10L11 15"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </a>
+        </div>
       </div>
     </section>
 
@@ -185,5 +383,102 @@
 
     <!-- Firebase SDK v10 (Modular) -->
     <script type="module" src="./config/firebase-config.js"></script>
+
+    <!-- Landing Page Scripts -->
+    <script>
+      // Mobile menu toggle
+      const navToggle = document.querySelector('.nav-toggle');
+      const navMenu = document.querySelector('.nav-menu');
+      const navOverlay = document.querySelector('.nav-overlay');
+      const body = document.body;
+
+      function toggleMenu() {
+        const isOpen = navMenu.classList.toggle('open');
+        navToggle.classList.toggle('active');
+        navToggle.setAttribute('aria-expanded', isOpen);
+
+        if (isOpen) {
+          navOverlay.hidden = false;
+          body.style.overflow = 'hidden';
+        } else {
+          navOverlay.hidden = true;
+          body.style.overflow = '';
+        }
+      }
+
+      function closeMenu() {
+        navMenu.classList.remove('open');
+        navToggle.classList.remove('active');
+        navToggle.setAttribute('aria-expanded', false);
+        navOverlay.hidden = true;
+        body.style.overflow = '';
+      }
+
+      navToggle?.addEventListener('click', toggleMenu);
+      navOverlay?.addEventListener('click', closeMenu);
+
+      // Close menu when clicking nav links
+      document.querySelectorAll('.nav-menu a').forEach((link) => {
+        link.addEventListener('click', closeMenu);
+      });
+
+      // Navbar scroll effect
+      let lastScroll = 0;
+      const navbar = document.querySelector('.navbar');
+
+      window.addEventListener('scroll', () => {
+        const currentScroll = window.pageYOffset;
+
+        if (currentScroll > 50) {
+          navbar.style.padding = '0.5rem 0';
+          navbar.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.1)';
+        } else {
+          navbar.style.padding = '1rem 0';
+          navbar.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
+        }
+
+        lastScroll = currentScroll;
+      });
+
+      // Smooth scroll for anchor links
+      document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+        anchor.addEventListener('click', function (e) {
+          const href = this.getAttribute('href');
+          if (href !== '#' && href.length > 1) {
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) {
+              target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'start',
+              });
+            }
+          }
+        });
+      });
+
+      // Intersection Observer for fade-in animations
+      const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px',
+      };
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          }
+        });
+      }, observerOptions);
+
+      // Observe feature cards and sections
+      document.querySelectorAll('.feature-card, .about-card').forEach((el) => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(el);
+      });
+    </script>
   </body>
 </html>

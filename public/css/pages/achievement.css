@@ -1,0 +1,528 @@
+/* Use exact colors from landing page */
+:root {
+  --primary: #1211ca;
+  --secondary: #f9b314;
+  --bg: #f8f9fb;
+  --card: #ffffff;
+  --text: #333;
+  --muted: #666;
+  --border: #e1e5e9;
+  --sidebar-bg: #2d3748;
+  --sidebar-text: #e2e8f0;
+  --sidebar-hover: #4a5568;
+  --sidebar-active: #1211ca;
+}
+
+body {
+  margin: 0;
+  font-family:
+    'Inter',
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  background:
+    radial-gradient(1000px 600px at 10% -10%, rgba(18, 17, 202, 0.06), transparent 60%),
+    radial-gradient(900px 540px at 95% 110%, rgba(249, 179, 20, 0.08), transparent 60%);
+  color: var(--text);
+  line-height: 1.6;
+  animation: fadeIn 0.5s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.layout {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Hamburger Menu Button - centered on left edge */
+.hamburger-btn {
+  position: fixed;
+  top: 50%;
+  left: 20px;
+  transform: translateY(-50%);
+  z-index: 1003;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--primary);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.hamburger-btn.sidebar-open {
+  left: 280px;
+}
+
+.hamburger-btn:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-50%) scale(1.05);
+}
+
+/* Sidebar - now off-canvas */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px;
+  width: 260px;
+  height: 100vh;
+  background: var(--sidebar-bg);
+  color: var(--sidebar-text);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 16px;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1002;
+  overflow-y: auto;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar.open {
+  left: 0;
+}
+
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1001;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.3s ease,
+    visibility 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: var(--sidebar-text);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.sidebar-close:hover {
+  background: var(--sidebar-hover);
+}
+
+.sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.sidebar .brand:hover {
+  transform: scale(1.05);
+}
+
+.logo-shuttle {
+  color: var(--primary);
+}
+.logo-stats {
+  color: var(--secondary);
+}
+
+.sidebar-nav {
+  margin-top: 8px;
+}
+.nav-group {
+  margin: 18px 0;
+}
+.nav-label {
+  font-size: 0.75rem;
+  color: var(--secondary);
+  letter-spacing: 0.06em;
+  padding: 0 12px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.nav-link {
+  display: block;
+  padding: 12px 16px;
+  margin: 4px 0;
+  border-radius: 12px;
+  color: var(--sidebar-text);
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 500;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+  transition: left 0.5s ease;
+}
+
+.nav-link:hover::before {
+  left: 100%;
+}
+
+.nav-link:hover {
+  background: var(--sidebar-hover);
+  color: white;
+  transform: translateX(4px);
+}
+
+.nav-link.active {
+  background: var(--primary);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(18, 17, 202, 0.3);
+}
+
+/* Main content */
+.main {
+  width: 100%;
+  padding: 24px;
+  padding-top: 0;
+  min-height: 100vh;
+}
+
+/* App Header with Logo and User Profile */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.95);
+  border: none;
+  border-bottom: 1px solid rgba(234, 234, 234, 0.8);
+  padding: 20px 32px;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Compressed header state when user scrolls down */
+.app-header {
+  transition:
+    padding 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 220ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 220ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-header.header-compressed {
+  padding: 8px 20px; /* reduce header height */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  transform: translateZ(0);
+}
+
+.app-header.header-compressed .app-logo {
+  font-size: 1.75rem; /* reduce logo size */
+  gap: 10px;
+}
+
+.app-header.header-compressed .user-profile {
+  padding: 6px 12px; /* keep user profile visible but smaller */
+  font-size: 0.95rem;
+}
+
+/* Ensure the user-name remains visible at compressed size */
+.app-header.header-compressed .user-profile .user-name {
+  display: inline-block;
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  font-size: 2.2rem;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.app-logo:hover {
+  transform: scale(1.02);
+}
+
+.app-logo .logo-shuttle {
+  color: var(--primary);
+  font-weight: 900;
+}
+
+.app-logo .logo-stats {
+  color: var(--secondary);
+  font-weight: 900;
+}
+
+/* Page Title Section */
+.page-title {
+  margin-bottom: clamp(2rem, 5vw, 3rem);
+  margin-top: clamp(2rem, 5vw, 3rem);
+  padding: 0 8px;
+}
+
+.page-title h1 {
+  margin: 0 0 12px;
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
+  color: var(--primary);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.subheading {
+  margin: 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-weight: 500;
+}
+
+/* User Profile in Header */
+.user-profile-container {
+  position: relative;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 50px;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 1rem;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.user-profile:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(18, 17, 202, 0.25);
+}
+
+.user-profile .user-name {
+  font-weight: 600;
+  color: var(--text);
+  transition: color 0.3s ease;
+  font-size: 1rem;
+  pointer-events: none;
+}
+
+.user-profile:hover .user-name {
+  color: white;
+}
+
+.user-profile .user-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: white;
+  transition: background 0.3s ease;
+  cursor: pointer;
+}
+
+.user-profile:hover .user-icon {
+  background: white;
+  color: var(--primary);
+}
+
+/* Settings Dropdown Menu */
+.settings-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(225, 229, 233, 0.8);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  min-width: 220px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.settings-dropdown.active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  color: var(--text);
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.dropdown-item:hover {
+  background: var(--bg);
+  color: var(--primary);
+}
+
+.dropdown-item:active {
+  background: rgba(18, 17, 202, 0.1);
+}
+
+.dropdown-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-text {
+  font-weight: 500;
+  flex: 1;
+}
+
+/* Logout item special styling */
+.dropdown-item[data-action='logout'] {
+  color: #dc3545;
+}
+
+.dropdown-item[data-action='logout']:hover {
+  background: #dc3545;
+  color: white;
+}
+
+/* Page Content Section */
+.page-content {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(225, 229, 233, 0.8);
+  border-radius: 20px;
+  padding: 40px;
+  margin-top: 20px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.page-content h2 {
+  margin: 0 0 16px;
+  font-size: 1.8rem;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.page-content p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .hamburger-btn {
+    top: 20px;
+    left: 16px;
+    transform: none;
+    padding: 10px;
+    font-size: 1rem;
+  }
+
+  .hamburger-btn.sidebar-open {
+    left: 240px;
+  }
+
+  .main {
+    padding: 16px;
+  }
+
+  .app-header {
+    flex-direction: column;
+    gap: 20px;
+    align-items: center;
+    text-align: center;
+    padding: 24px 20px;
+    position: static;
+  }
+
+  .app-logo {
+    font-size: 1.8rem;
+  }
+
+  .page-title {
+    text-align: center;
+    padding: 0;
+  }
+
+  .page-title h1 {
+    font-size: 2rem;
+  }
+
+  .page-content {
+    padding: 24px;
+  }
+}

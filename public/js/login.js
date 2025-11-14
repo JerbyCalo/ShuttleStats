@@ -385,10 +385,12 @@ import {
         passwordToggle.addEventListener('click', () => {
           if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
-            passwordToggle.textContent = '🙈';
+            const icon = passwordToggle.querySelector('.toggle-icon');
+            if (icon) icon.src = 'assets/img/eye-open.png';
           } else {
             passwordInput.type = 'password';
-            passwordToggle.textContent = '👁️';
+            const icon = passwordToggle.querySelector('.toggle-icon');
+            if (icon) icon.src = 'assets/img/eye-closed.png';
           }
         });
       }
@@ -400,10 +402,12 @@ import {
         confirmToggle.addEventListener('click', () => {
           if (confirmInput.type === 'password') {
             confirmInput.type = 'text';
-            confirmToggle.textContent = '🙈';
+            const icon = confirmToggle.querySelector('.toggle-icon');
+            if (icon) icon.src = 'assets/img/eye-open.png';
           } else {
             confirmInput.type = 'password';
-            confirmToggle.textContent = '👁️';
+            const icon = confirmToggle.querySelector('.toggle-icon');
+            if (icon) icon.src = 'assets/img/eye-closed.png';
           }
         });
       }
@@ -861,8 +865,14 @@ import {
         // Reset password toggles
         const passwordToggle = document.getElementById('signup-passwordToggle');
         const confirmToggle = document.getElementById('signup-confirmPasswordToggle');
-        if (passwordToggle) passwordToggle.textContent = '👁️';
-        if (confirmToggle) confirmToggle.textContent = '👁️';
+        if (passwordToggle) {
+          const icon = passwordToggle.querySelector('.toggle-icon');
+          if (icon) icon.src = 'assets/img/eye-closed.png';
+        }
+        if (confirmToggle) {
+          const icon = confirmToggle.querySelector('.toggle-icon');
+          if (icon) icon.src = 'assets/img/eye-closed.png';
+        }
 
         // Disable submit button
         const submitButton = document.getElementById('signup-submit');
@@ -904,7 +914,13 @@ import {
             passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
           passwordInput.setAttribute('type', type);
           // Toggle eye icon
-          toggleButton.textContent = type === 'password' ? '👁️' : '🙈';
+          const icon = toggleButton.querySelector('.toggle-icon');
+          if (icon) {
+            icon.src =
+              type === 'password'
+                ? 'assets/img/eye-closed.png'
+                : 'assets/img/eye-open.png';
+          }
         });
       }
     },

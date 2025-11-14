@@ -1,16 +1,20 @@
 // ShuttleStats v2 - Toast Notification System
-console.log("toast.js loaded");
+console.log('toast.js loaded');
 
 (function () {
   let toastContainer = null;
   let toastCount = 0;
 
-  // Initialize toast styles
+  /**
+   * Initialize toast notification styles
+   * Creates and injects CSS styles into the document head
+   * @returns {void}
+   */
   function initializeStyles() {
-    if (document.getElementById("toast-styles")) return; // Already initialized
+    if (document.getElementById('toast-styles')) return; // Already initialized
 
-    const style = document.createElement("style");
-    style.id = "toast-styles";
+    const style = document.createElement('style');
+    style.id = 'toast-styles';
     style.textContent = `
       .toast-container {
         position: fixed;
@@ -223,45 +227,59 @@ console.log("toast.js loaded");
     document.head.appendChild(style);
   }
 
-  // Create toast container if it doesn't exist
-  function ensureToastContainer() {
+  /**
+   * Create toast container if it doesn't exist
+   * Initializes the DOM container for toast notifications
+   * @returns {HTMLElement} The toast container element
+   */
+  function createToastContainer() {
     if (!toastContainer) {
-      toastContainer = document.createElement("div");
-      toastContainer.className = "toast-container";
+      toastContainer = document.createElement('div');
+      toastContainer.className = 'toast-container';
       document.body.appendChild(toastContainer);
     }
   }
 
-  // Get icon for toast type
+  /**
+   * Get icon emoji for toast type
+   * @param {string} type - Toast type ('success', 'error', 'info', 'warning')
+   * @returns {string} Icon emoji corresponding to the type
+   */
   function getToastIcon(type) {
     const icons = {
-      success: "✅",
-      error: "❌",
-      info: "ℹ️",
-      warning: "⚠️",
+      success: '✅',
+      error: '❌',
+      info: 'ℹ️',
+      warning: '⚠️',
     };
     return icons[type] || icons.info;
   }
 
-  // Create and show toast
-  function showToast(message, type = "info", duration = 4000) {
+  /**
+   * Create and show a toast notification
+   * @param {string} message - Message to display in the toast
+   * @param {string} type - Toast type: 'success', 'error', 'info', or 'warning'
+   * @param {number} duration - Duration in milliseconds before auto-dismiss (default: 4000)
+   * @returns {HTMLElement} The created toast element
+   */
+  function showToast(message, type = 'info', duration = 4000) {
     // Validate parameters
     if (!message) {
-      console.warn("Toast: message is required");
+      console.warn('Toast: message is required');
       return;
     }
 
-    if (!["success", "error", "info", "warning"].includes(type)) {
+    if (!['success', 'error', 'info', 'warning'].includes(type)) {
       console.warn(`Toast: invalid type "${type}". Using "info" instead.`);
-      type = "info";
+      type = 'info';
     }
 
     // Initialize styles and container
     initializeStyles();
-    ensureToastContainer();
+    createToastContainer();
 
     // Create toast element
-    const toast = document.createElement("div");
+    const toast = document.createElement('div');
     const toastId = `toast-${++toastCount}`;
     toast.id = toastId;
     toast.className = `toast ${type}`;
@@ -275,8 +293,8 @@ console.log("toast.js loaded");
     `;
 
     // Add close functionality
-    const closeButton = toast.querySelector(".toast-close");
-    closeButton.addEventListener("click", () => {
+    const closeButton = toast.querySelector('.toast-close');
+    closeButton.addEventListener('click', () => {
       dismissToast(toast);
     });
 
@@ -285,7 +303,7 @@ console.log("toast.js loaded");
 
     // Trigger show animation
     requestAnimationFrame(() => {
-      toast.classList.add("show");
+      toast.classList.add('show');
     });
 
     // Auto dismiss
@@ -302,7 +320,11 @@ console.log("toast.js loaded");
     return toast;
   }
 
-  // Dismiss toast with animation
+  /**
+   * Dismiss a toast notification with animation
+   * @param {HTMLElement} toast - The toast element to dismiss
+   * @returns {void}
+   */
   function dismissToast(toast) {
     if (!toast || !toast.parentNode) return;
 
@@ -312,8 +334,8 @@ console.log("toast.js loaded");
     }
 
     // Add hiding class for exit animation
-    toast.classList.remove("show");
-    toast.classList.add("hiding");
+    toast.classList.remove('show');
+    toast.classList.add('hiding');
 
     // Remove from DOM after animation
     setTimeout(() => {
@@ -335,25 +357,25 @@ console.log("toast.js loaded");
   function dismissAllToasts() {
     if (!toastContainer) return;
 
-    const toasts = Array.from(toastContainer.querySelectorAll(".toast"));
+    const toasts = Array.from(toastContainer.querySelectorAll('.toast'));
     toasts.forEach(dismissToast);
   }
 
   // Utility functions for common use cases
   function showSuccess(message, duration) {
-    return showToast(message, "success", duration);
+    return showToast(message, 'success', duration);
   }
 
   function showError(message, duration) {
-    return showToast(message, "error", duration);
+    return showToast(message, 'error', duration);
   }
 
   function showInfo(message, duration) {
-    return showToast(message, "info", duration);
+    return showToast(message, 'info', duration);
   }
 
   function showWarning(message, duration) {
-    return showToast(message, "warning", duration);
+    return showToast(message, 'warning', duration);
   }
 
   // Export functions to global scope
@@ -374,11 +396,11 @@ console.log("toast.js loaded");
     dismissAll: dismissAllToasts,
   };
 
-  console.log("Toast notification system initialized");
+  console.log('Toast notification system initialized');
 
   // Initialize styles immediately if DOM is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initializeStyles);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeStyles);
   } else {
     initializeStyles();
   }

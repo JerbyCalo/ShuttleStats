@@ -395,12 +395,6 @@
         flex: 1;
       }
 
-      .dropdown-divider {
-        height: 1px;
-        background: var(--border);
-        margin: 4px 0;
-      }
-
       /* Logout item special styling */
       .dropdown-item[data-action='logout'] {
         color: #dc3545;
@@ -712,16 +706,21 @@
           <!-- Settings Dropdown Menu -->
           <div class="settings-dropdown" id="settingsDropdown">
             <a href="profile.html" class="dropdown-item" data-action="profile">
-              <span class="dropdown-icon">👤</span>
+              <span class="dropdown-icon"
+                ><img src="assets/img/profile.png" alt="Profile"
+              /></span>
               <span class="dropdown-text">Profile</span>
             </a>
             <a href="#" class="dropdown-item" data-action="notifications">
-              <span class="dropdown-icon">🔔</span>
+              <span class="dropdown-icon"
+                ><img src="assets/img/notification.png" alt="Notifications"
+              /></span>
               <span class="dropdown-text">Notifications</span>
             </a>
-            <div class="dropdown-divider"></div>
             <a href="#" class="dropdown-item" data-action="logout">
-              <span class="dropdown-icon">🚪</span>
+              <span class="dropdown-icon"
+                ><img src="assets/img/logout.png" alt="Logout"
+              /></span>
               <span class="dropdown-text">Logout</span>
             </a>
           </div>

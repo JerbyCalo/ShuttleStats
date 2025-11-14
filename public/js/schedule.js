@@ -20,6 +20,9 @@ import {
 // Import authentication utilities for better role detection
 import { checkAuthenticationState } from './auth-utils.js';
 
+// Import timezone utilities for GMT+8 handling
+import { displayDateGMT8, getTodayGMT8, getCurrentDateGMT8 } from './timezone-utils.js';
+
 (function () {
   // Track if we're in coach mode
   let isCoachMode = false;
@@ -53,16 +56,14 @@ import { checkAuthenticationState } from './auth-utils.js';
     return cleaned;
   }
 
-  // Format date to readable string
+  // Format date to readable string (using GMT+8 timezone)
   function formatDate(dateString) {
-    const date = new Date(dateString);
-    const options = {
+    return displayDateGMT8(dateString, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    };
-    return date.toLocaleDateString('en-US', options);
+    });
   }
 
   // Format time to readable string
@@ -604,46 +605,12 @@ import { checkAuthenticationState } from './auth-utils.js';
   // Render all schedule events (works with filtered data in coach mode)
   async function renderScheduleEvents(eventsData = null) {
     // Patched by AI assistant to format event data for calendar view.
-    // DEBUGGING: Log the entire authentication process
-    console.log('=== RENDER SCHEDULE EVENTS DEBUG START ===');
-    console.log('renderScheduleEvents function called at:', new Date().toISOString());
-    console.log(
-      'Called with eventsData parameter:',
-      eventsData !== null ? 'provided' : 'null'
-    );
-
     // Check sessionStorage state
     const currentUserId = sessionStorage.getItem('currentUserId');
-    console.log('CurrentUserId from sessionStorage:', currentUserId);
-
-    // Check window authentication state
-    console.log('window.currentUser:', window.currentUser);
-    console.log('window.currentUserData:', window.currentUserData);
-
-    // Log the full sessionStorage contents
-    console.log('Full sessionStorage dump:');
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
-      console.log(`  ${key}: ${sessionStorage.getItem(key)}`);
-    }
-
-    // Check if DOM is ready
-    console.log('Document readyState:', document.readyState);
-
-    // Log call stack information
-    console.log('Function called from:', new Error().stack);
 
     // AUTHENTICATION GUARD CLAUSE - Check authentication before doing anything
     if (!currentUserId) {
-      console.error('=== AUTHENTICATION FAILURE ===');
       console.error('No authenticated user found in renderScheduleEvents.');
-      console.error(
-        'This suggests the function was called before authentication setup completed.'
-      );
-      console.error(
-        'Check the call stack above to see which function triggered this call.'
-      );
-      console.log('=== RENDER SCHEDULE EVENTS DEBUG END (FAILED) ===');
 
       const container = document.getElementById('scheduleEventsContainer');
       if (container) {
@@ -666,21 +633,11 @@ import { checkAuthenticationState } from './auth-utils.js';
       return; // Stop execution if no user is found
     }
 
-    console.log('=== AUTHENTICATION SUCCESS ===');
-    console.log('Proceeding with renderScheduleEvents...');
-
     // DATA VALIDATION GUARD CLAUSE - Handle null or invalid data
-    console.log('=== DATA VALIDATION CHECK ===');
-    console.log('eventsData type:', typeof eventsData);
-    console.log('eventsData value:', eventsData);
-    console.log('Is eventsData an array?', Array.isArray(eventsData));
-
     // If eventsData is explicitly null, we'll handle it in the data fetching logic below
     // But if it's provided and not an array, that's an error
     if (eventsData !== null && !Array.isArray(eventsData)) {
-      console.error('=== DATA VALIDATION FAILURE ===');
       console.error('Invalid events data provided (not null and not array):', eventsData);
-      console.log('=== RENDER SCHEDULE EVENTS DEBUG END (DATA INVALID) ===');
 
       const container = document.getElementById('scheduleEventsContainer');
       if (container) {
@@ -697,9 +654,6 @@ import { checkAuthenticationState } from './auth-utils.js';
 
       return; // Stop execution if data format is invalid
     }
-
-    console.log('=== DATA VALIDATION SUCCESS ===');
-    console.log('Data format is valid, proceeding...');
 
     const container = document.getElementById('scheduleEventsContainer');
 
@@ -719,11 +673,8 @@ import { checkAuthenticationState } from './auth-utils.js';
 
       // If specific data is provided, use it
       if (eventsData !== null) {
-        console.log('=== USING PROVIDED EVENTS DATA ===');
         dataToRender = eventsData;
       } else {
-        console.log('=== FETCHING DATA FROM FIRESTORE ===');
-
         // Get comprehensive auth state
         const authState = await checkAuthenticationState();
         if (!authState.authenticated) {
@@ -743,12 +694,8 @@ import { checkAuthenticationState } from './auth-utils.js';
         const currentUserId = authState.user.uid;
         const userRole = authState.userData?.role || 'player';
 
-        console.log('Using user ID:', currentUserId);
-        console.log('User role:', userRole);
-
         if (isCoachMode) {
           // Coach mode: Use current filtered data or fetch all created by coach
-          console.log('Coach mode: using filtered data or fetching coach events');
           if (currentFilteredData.length > 0) {
             dataToRender = currentFilteredData;
           } else {
@@ -797,15 +744,7 @@ import { checkAuthenticationState } from './auth-utils.js';
       hideLoadingSpinner('scheduleEventsContainer');
 
       // Check if we have schedule data
-      console.log('=== CHECKING DATA TO RENDER ===');
-      console.log('dataToRender:', normalizedEvents);
-      console.log(
-        'dataToRender length:',
-        normalizedEvents ? normalizedEvents.length : 'N/A'
-      );
-
       if (!normalizedEvents || normalizedEvents.length === 0) {
-        console.log('=== NO DATA TO RENDER - SHOWING EMPTY STATE ===');
         const emptyMessage = isCoachMode ? '' : '';
 
         showEmptyState('scheduleEventsContainer', {
@@ -815,7 +754,6 @@ import { checkAuthenticationState } from './auth-utils.js';
         });
 
         updateScheduleStats(normalizedEvents);
-        console.log('=== RENDER SCHEDULE EVENTS DEBUG END (NO DATA) ===');
         return;
       }
 
@@ -834,7 +772,6 @@ import { checkAuthenticationState } from './auth-utils.js';
       updateScheduleStats(sortedEvents);
 
       console.log(`Rendered ${sortedEvents.length} schedule events`);
-      console.log('=== RENDER SCHEDULE EVENTS DEBUG END (SUCCESS) ===');
     } catch (error) {
       console.error('Error rendering schedule events:', error);
       hideLoadingSpinner('scheduleEventsContainer');
@@ -1006,9 +943,6 @@ import { checkAuthenticationState } from './auth-utils.js';
       // Add event listener for filtering
       dropdown.addEventListener('change', async function () {
         const selectedPlayerId = this.value;
-        console.log('=== DROPDOWN FILTER CHANGE EVENT ===');
-        console.log(`Filtering schedule data for player: ${selectedPlayerId}`);
-        console.log('Dropdown change event triggered at:', new Date().toISOString());
 
         // Show loading while filtering
         showLocalLoader('scheduleEventsContainer', {
@@ -1018,11 +952,9 @@ import { checkAuthenticationState } from './auth-utils.js';
 
         try {
           // Filter the data from Firestore
-          console.log('About to call filterScheduleData...');
           currentFilteredData = await filterScheduleData(selectedPlayerId);
 
           // Re-render both list and calendar views with filtered data
-          console.log('About to call renderScheduleEvents from dropdown change...');
           await renderScheduleEvents();
           if (currentView === 'calendar') {
             renderCalendar();
@@ -1049,14 +981,6 @@ import { checkAuthenticationState } from './auth-utils.js';
 
       // Trigger initial change event to load first player's data
       setTimeout(() => {
-        console.log('=== TRIGGERING INITIAL DROPDOWN CHANGE EVENT ===');
-        console.log('Auto-triggering dropdown change at:', new Date().toISOString());
-        console.log('Current authentication state before auto-trigger:');
-        console.log(
-          '  sessionStorage currentUserId:',
-          sessionStorage.getItem('currentUserId')
-        );
-        console.log('  window.currentUser:', window.currentUser);
         dropdown.dispatchEvent(new Event('change'));
       }, 100);
 
@@ -1068,8 +992,6 @@ import { checkAuthenticationState } from './auth-utils.js';
 
   // Set up coach mode UI transformations
   function setupCoachMode() {
-    console.log('Setting up coach mode UI...');
-
     // Update page title
     const pageTitle = document.querySelector('.page-title h1');
     if (pageTitle) {
@@ -1084,8 +1006,6 @@ import { checkAuthenticationState } from './auth-utils.js';
 
     // DO NOT create player filter dropdown for schedule - coach manages their own events
     // createPlayerFilterDropdown(); // REMOVED
-
-    console.log('Coach mode UI setup complete (no player filter for schedule)');
   }
 
   // Set up "Add New Event" button
@@ -1399,22 +1319,11 @@ import { checkAuthenticationState } from './auth-utils.js';
 
   // Initialize schedule page when DOM is ready
   document.addEventListener('DOMContentLoaded', function () {
-    console.log('=== SCHEDULE PAGE INITIALIZATION DEBUG ===');
-    console.log('DOMContentLoaded fired at:', new Date().toISOString());
-    console.log('Schedule page initializing...');
-
-    // Debug authentication state at initialization
-    const currentUserId = sessionStorage.getItem('currentUserId');
-    console.log('Authentication state during initialization:');
-    console.log('  currentUserId from sessionStorage:', currentUserId);
-    console.log('  window.currentUser:', window.currentUser);
-    console.log('  window.currentUserData:', window.currentUserData);
-
     // Authentication guard - check if user is logged in
+    const currentUserId = sessionStorage.getItem('currentUserId');
+
     if (!currentUserId) {
-      console.error('=== INITIALIZATION AUTHENTICATION FAILURE ===');
       console.error('No authenticated user found during DOMContentLoaded.');
-      console.error("This suggests role-manager.js hasn't run yet or failed.");
 
       if (typeof showToast === 'function') {
         showToast('Please log in to view the schedule.', 'error');
@@ -1428,9 +1337,6 @@ import { checkAuthenticationState } from './auth-utils.js';
       return; // Stop execution
     }
 
-    console.log('=== INITIALIZATION AUTHENTICATION SUCCESS ===');
-    console.log('Proceeding with schedule page setup...');
-
     // Check if user is a coach (from URL parameter)
     const urlParams = new URLSearchParams(window.location.search);
     const userRole = urlParams.get('user');
@@ -1438,7 +1344,6 @@ import { checkAuthenticationState } from './auth-utils.js';
     if (userRole === 'coach') {
       // Coach mode: Transform page for management view
       isCoachMode = true;
-      console.log('Coach mode detected - setting up management interface');
 
       // Set up coach mode UI
       setupCoachMode();
@@ -1484,8 +1389,6 @@ import { checkAuthenticationState } from './auth-utils.js';
       initializeViewState();
 
       // Render schedule events (list view)
-      console.log('=== CALLING renderScheduleEvents FROM PLAYER MODE INITIALIZATION ===');
-      console.log('About to call renderScheduleEvents at:', new Date().toISOString());
       renderScheduleEvents();
 
       // Set up all UI interactions
@@ -1517,6 +1420,48 @@ import { checkAuthenticationState } from './auth-utils.js';
 
     console.log('Schedule page initialized successfully');
   });
+
+  // Initialize header compression for schedule page
+  try {
+    initHeaderCompression();
+  } catch (err) {
+    // initHeaderCompression will be defined below; if not yet available we ignore
+  }
+
+  // Header compression: toggle .header-compressed on .app-header when scrolling down
+  function initHeaderCompression() {
+    const header = document.querySelector('.app-header');
+    if (!header) return;
+
+    let lastKnownScrollY = window.scrollY || window.pageYOffset;
+    let ticking = false;
+    const compressThreshold = 60; // px scrolled before compressing
+
+    function onScroll() {
+      lastKnownScrollY = window.scrollY || window.pageYOffset;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updateHeader(lastKnownScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    function updateHeader(scrollY) {
+      if (scrollY > compressThreshold) {
+        header.classList.add('header-compressed');
+      } else {
+        header.classList.remove('header-compressed');
+      }
+    }
+
+    // Attach listener
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Run once to set initial state
+    updateHeader(window.scrollY || window.pageYOffset);
+  }
 
   // Export functions for external use
   window.renderScheduleEvents = renderScheduleEvents;

@@ -21,25 +21,36 @@ import {
 // Import authentication utilities for better role detection
 import { checkAuthenticationState } from './auth-utils.js';
 
+// Import timezone utilities for GMT+8 handling
+import { displayDateGMT8 } from './timezone-utils.js';
+
 (function () {
   // Track if we're in coach mode
   let isCoachMode = false;
   let currentFilteredData = [];
   let trainingListener = null; // For real-time updates
 
-  // Format date to readable string
+  /**
+   * Format date to readable string using GMT+8 timezone
+   * @param {string} dateString - Date string in YYYY-MM-DD format
+   * @returns {string} Formatted date string with weekday, month, day, and year
+   */
   function formatDate(dateString) {
-    const date = new Date(dateString);
-    const options = {
+    return displayDateGMT8(dateString, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    };
-    return date.toLocaleDateString('en-US', options);
+    });
   }
 
-  // Get intensity badge class based on 1-10 scale
+  /**
+   * Get CSS class for intensity badge based on 1-10 scale
+   * Maps numeric intensity (1-10) to four tiers: Light (1-3), Moderate (4-6), Hard (7-8), Extreme (9-10)
+   * Also handles legacy text values (Low, Medium, High) for backward compatibility
+   * @param {string|number} intensity - Intensity value (1-10 or legacy text)
+   * @returns {string} CSS class name for the intensity badge
+   */
   function getIntensityClass(intensity) {
     const intensityNum = parseInt(intensity);
 
@@ -69,7 +80,12 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Get intensity label for display
+  /**
+   * Get human-readable intensity label for display
+   * Converts numeric intensity (1-10) to descriptive text
+   * @param {string|number} intensity - Intensity value (1-10 or legacy text)
+   * @returns {string} Formatted intensity label (e.g., "7 - Hard", "5 - Moderate")
+   */
   function getIntensityLabel(intensity) {
     const intensityNum = parseInt(intensity);
 
@@ -90,7 +106,11 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Get player name by ID (for coach mode) - Updated to use real data
+  /**
+   * Get player name by ID from Firestore (for coach mode)
+   * @param {string} playerId - Firebase user ID of the player
+   * @returns {Promise<string>} Player's full name or "Unknown Player" if not found
+   */
   async function getPlayerName(playerId) {
     try {
       const playerDoc = await getDoc(doc(db, 'users', playerId));
@@ -105,7 +125,11 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Get coach name by ID (for player mode feedback display)
+  /**
+   * Get coach name by ID from Firestore (for player mode feedback display)
+   * @param {string} coachId - Firebase user ID of the coach
+   * @returns {Promise<string>} Coach's full name or "Coach" if not found
+   */
   async function getCoachName(coachId) {
     try {
       const coachDoc = await getDoc(doc(db, 'users', coachId));
@@ -120,7 +144,12 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Submit feedback for a training session
+  /**
+   * Submit feedback for a training session (coach only)
+   * Creates a new feedback document in Firestore and updates the UI
+   * @param {string} sessionId - Firestore document ID of the training session
+   * @returns {Promise<boolean>} True if successful, false otherwise
+   */
   async function submitFeedback(sessionId) {
     const currentUserId = sessionStorage.getItem('currentUserId');
     const currentUserRole = sessionStorage.getItem('userRole');
@@ -204,7 +233,13 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Load and display feedback for a training session
+  /**
+   * Load and display feedback for a training session
+   * Fetches feedback from Firestore and renders it in the specified container
+   * @param {string} sessionId - Firestore document ID of the training session
+   * @param {HTMLElement} containerElement - DOM element to render feedback into
+   * @returns {Promise<void>}
+   */
   async function loadFeedback(sessionId, containerElement) {
     if (!containerElement) {
       console.error('No container element provided for feedback display');
@@ -280,7 +315,13 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Set up real-time listener for feedback updates (for players)
+  /**
+   * Set up real-time listener for feedback updates (for players)
+   * Creates a Firestore snapshot listener that auto-updates when feedback changes
+   * @param {string} sessionId - Firestore document ID of the training session
+   * @param {HTMLElement} containerElement - DOM element to render feedback updates
+   * @returns {void}
+   */
   function setupFeedbackListener(sessionId, containerElement) {
     if (!containerElement) return;
 
@@ -314,7 +355,19 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Create training session card
+  /**
+   * Create a training session card element with all details and actions
+   * Includes session info, intensity badge, feedback section, and edit/delete buttons
+   * @param {Object} session - Training session data object
+   * @param {string} session.id - Firestore document ID
+   * @param {string} session.date - Session date (YYYY-MM-DD)
+   * @param {number} session.duration - Duration in minutes
+   * @param {string} session.type - Training type (Drills, Match Play, etc.)
+   * @param {number} session.intensity - Intensity rating (1-10)
+   * @param {string} session.notes - Session notes
+   * @param {string} session.playerId - Player's Firebase user ID
+   * @returns {Promise<HTMLElement>} DOM element representing the training card
+   */
   async function createTrainingCard(session) {
     const card = document.createElement('div');
     card.className = 'training-card';
@@ -469,7 +522,12 @@ import { checkAuthenticationState } from './auth-utils.js';
     return card;
   }
 
-  // Fetch training sessions from Firestore (Player View)
+  /**
+   * Fetch training sessions from Firestore for a specific player
+   * @param {string} userId - Firebase user ID of the player
+   * @returns {Promise<Array<Object>>} Array of training session objects
+   * @throws {Error} If Firestore query fails
+   */
   async function fetchPlayerTrainingSessions(userId) {
     if (!userId) {
       console.warn('No user ID provided for fetching training sessions');
@@ -497,7 +555,13 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Fetch training sessions from Firestore (Coach View)
+  /**
+   * Fetch training sessions from Firestore for a coach (optionally filtered by player)
+   * @param {string} coachId - Firebase user ID of the coach
+   * @param {string|null} playerId - Optional Firebase user ID of specific player to filter
+   * @returns {Promise<Array<Object>>} Array of training session objects
+   * @throws {Error} If Firestore query fails
+   */
   async function fetchCoachTrainingSessions(coachId, playerId = null) {
     if (!coachId) {
       console.warn('No coach ID provided for fetching training sessions');
@@ -536,7 +600,11 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Filter training data by player ID (for coach mode) - Updated to use Firestore data
+  /**
+   * Filter training data by player ID for coach mode using Firestore
+   * @param {string} playerId - Firebase user ID of the player to filter by
+   * @returns {Promise<Array<Object>>} Array of filtered training session objects
+   */
   async function filterTrainingData(playerId) {
     const currentUserId = sessionStorage.getItem('currentUserId');
     if (!currentUserId) {
@@ -558,7 +626,11 @@ import { checkAuthenticationState } from './auth-utils.js';
     }
   }
 
-  // Update training statistics (works with Firestore data)
+  /**
+   * Update training statistics display (total sessions and hours)
+   * @param {Array<Object>} dataToUse - Array of training session objects to calculate stats from
+   * @returns {void}
+   */
   function updateTrainingStats(dataToUse = []) {
     const totalSessionsEl = document.getElementById('totalSessions');
     const totalHoursEl = document.getElementById('totalHours');
@@ -582,7 +654,13 @@ import { checkAuthenticationState } from './auth-utils.js';
     console.log(`Stats updated: ${totalSessions} sessions, ${totalHours} hours`);
   }
 
-  // Render training sessions (works with Firestore data)
+  /**
+   * Render training sessions to the page
+   * Fetches data from Firestore (if not provided) and creates training cards
+   * Handles both player and coach modes with appropriate filtering
+   * @param {Array<Object>|null} sessionsData - Optional pre-fetched session data
+   * @returns {Promise<void>}
+   */
   async function renderTrainingSessions(sessionsData = null) {
     const container = document.getElementById('trainingSessionsContainer');
 
@@ -692,9 +770,6 @@ import { checkAuthenticationState } from './auth-utils.js';
       return;
     }
 
-    console.log('=== DEBUG: Creating player filter dropdown ===');
-    console.log('Current coach user ID:', currentUserId);
-
     try {
       // Create dropdown container
       const filterContainer = document.createElement('div');
@@ -746,17 +821,9 @@ import { checkAuthenticationState } from './auth-utils.js';
         where('status', '==', 'accepted')
       );
 
-      console.log("=== DEBUG: Querying for coach's players ===");
       const querySnapshot = await getDocs(coachPlayersQuery);
-      console.log('Found', querySnapshot.size, 'player relationships');
 
       if (querySnapshot.empty) {
-        console.log('=== DEBUG: No player relationships found ===');
-        console.log('This could mean:');
-        console.log('1. Coach has no players assigned');
-        console.log('2. Incorrect coachId in query');
-        console.log("3. Players haven't accepted invitations yet");
-
         // Show "No Players" message
         const option = document.createElement('option');
         option.value = '';
@@ -769,8 +836,6 @@ import { checkAuthenticationState } from './auth-utils.js';
       const players = [];
       for (const docSnapshot of querySnapshot.docs) {
         const relationship = docSnapshot.data();
-        console.log('=== DEBUG: Processing player relationship ===');
-        console.log('Relationship data:', relationship);
 
         try {
           if (!relationship.playerId) {
@@ -781,11 +846,8 @@ import { checkAuthenticationState } from './auth-utils.js';
           // Fetch player details
           const playerDoc = await getDoc(doc(db, 'users', relationship.playerId));
 
-          console.log('Player document exists:', playerDoc.exists());
-
           if (playerDoc.exists()) {
             const playerData = playerDoc.data();
-            console.log('Player data:', playerData);
 
             if (!playerData.name || !playerData.name.first || !playerData.name.last) {
               console.warn('Player missing name data:', playerData);
@@ -796,12 +858,6 @@ import { checkAuthenticationState } from './auth-utils.js';
               id: relationship.playerId,
               name: `${playerData.name.first} ${playerData.name.last}`.trim(),
             });
-
-            console.log(
-              `Added player: ${players[players.length - 1].name} (${
-                players[players.length - 1].id
-              })`
-            );
           } else {
             console.warn(`Player document not found for ID: ${relationship.playerId}`);
           }
@@ -809,8 +865,6 @@ import { checkAuthenticationState } from './auth-utils.js';
           console.error('Error fetching player details:', error);
         }
       }
-
-      console.log(`=== DEBUG: Total players collected: ${players.length} ===`);
 
       // Populate dropdown with players only (NO "All Players" option)
       players.forEach((player) => {
@@ -1313,10 +1367,52 @@ import { checkAuthenticationState } from './auth-utils.js';
       setupAddTrainingButton();
     }
 
+    // Initialize header compression (keeps user-profile visible at top-right)
+    try {
+      initHeaderCompression();
+    } catch (err) {
+      console.warn('initHeaderCompression not available');
+    }
+
     // Set up real-time listener (stretch goal)
     setupRealtimeListener();
 
     console.log('Training page initialized successfully');
+  }
+
+  // Header compression: toggle .header-compressed on .app-header when scrolling down
+  function initHeaderCompression() {
+    const header = document.querySelector('.app-header');
+    if (!header) return;
+
+    let lastKnownScrollY = window.scrollY || window.pageYOffset;
+    let ticking = false;
+    const compressThreshold = 60; // px scrolled before compressing
+
+    function onScroll() {
+      lastKnownScrollY = window.scrollY || window.pageYOffset;
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          updateHeader(lastKnownScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }
+
+    function updateHeader(scrollY) {
+      if (scrollY > compressThreshold) {
+        header.classList.add('header-compressed');
+      } else {
+        header.classList.remove('header-compressed');
+      }
+    }
+
+    // Attach listener
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // Run once to set initial state
+    updateHeader(window.scrollY || window.pageYOffset);
   }
 
   // Hide 'Add New Training' button for coach accounts
