@@ -24,6 +24,13 @@ import { checkAuthenticationState } from './auth-utils.js';
 // Import timezone utilities for GMT+8 handling
 import { getDateOffsetGMT8, daysAgoGMT8, getCurrentDateGMT8 } from './timezone-utils.js';
 
+// Import modal functions
+import {
+  openLogTrainingModal,
+  openRecordMatchModal,
+  openSetGoalModal,
+} from './modals.js';
+
 (function () {
   function setActiveNav() {
     const dashboardLink = document.getElementById('navDashboard');
@@ -819,21 +826,13 @@ import { getDateOffsetGMT8, daysAgoGMT8, getCurrentDateGMT8 } from './timezone-u
       {
         text: '🏃‍♂️ Log Training Session',
         action: function () {
-          if (window.openLogTrainingModal) {
-            window.openLogTrainingModal();
-          } else {
-            console.warn('openLogTrainingModal function not available');
-          }
+          openLogTrainingModal();
         },
       },
       {
         text: '🏆 Record Match',
         action: function () {
-          if (window.openRecordMatchModal) {
-            window.openRecordMatchModal();
-          } else {
-            console.warn('openRecordMatchModal function not available');
-          }
+          openRecordMatchModal();
         },
       },
       {
@@ -846,11 +845,7 @@ import { getDateOffsetGMT8, daysAgoGMT8, getCurrentDateGMT8 } from './timezone-u
       {
         text: '🎯 Set New Goal',
         action: function () {
-          if (window.openSetGoalModal) {
-            window.openSetGoalModal();
-          } else {
-            console.warn('openSetGoalModal function not available');
-          }
+          openSetGoalModal();
         },
       },
     ];

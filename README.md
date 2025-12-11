@@ -46,15 +46,9 @@ https://shuttlestats.vercel.app/
 
 ```
 ShuttleStats/
-│   .gitattributes
-│   .gitignore
-│   .vercelignore
+|
 │   build.js
 │   README.md
-│
-├───.vercel
-│       project.json
-│       README.txt
 │
 ├───public
 │   │   achievement.html
