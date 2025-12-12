@@ -503,10 +503,96 @@ body {
   font-size: 1.2rem;
 }
 
+/* Filter Bar */
+.filter-bar {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 16px 20px;
+  background: var(--bg);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: var(--text);
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.filter-select {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+  min-width: 150px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(18, 17, 202, 0.1);
+}
+
+.archive-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.archive-toggle input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.toggle-label {
+  font-weight: 500;
+  color: var(--text);
+  font-size: 0.875rem;
+}
+
+/* Stat overdue styling */
+.stat-overdue {
+  color: #d32f2f !important;
+}
+
 .stats-summary {
   display: flex;
-  gap: 32px;
+  gap: 24px;
   align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Color-coded progress bars */
+.progress-fill.progress-low {
+  background: linear-gradient(90deg, #d32f2f 0%, #f44336 100%);
+}
+
+.progress-fill.progress-medium {
+  background: linear-gradient(90deg, #f57c00 0%, #ff9800 100%);
+}
+
+.progress-fill.progress-high {
+  background: linear-gradient(90deg, #388e3c 0%, #4caf50 100%);
 }
 
 .stat-item {
@@ -814,7 +900,7 @@ body {
 }
 
 .no-data p {
-  margin: 0;
+  margin: 0 auto;
   font-size: 1rem;
   line-height: 1.5;
 }
@@ -868,8 +954,33 @@ body {
     text-align: center;
   }
 
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
   .stats-summary {
     justify-content: center;
+    gap: 16px;
+  }
+
+  .stat-item {
+    min-width: 60px;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
   }
 
   .goal-card-header {

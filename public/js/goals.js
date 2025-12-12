@@ -23,10 +23,86 @@ import { checkAuthenticationState } from './auth-utils.js';
 // Import timezone utilities for GMT+8 handling
 import { displayDateGMT8 } from './timezone-utils.js';
 
+// Import shared user helper utilities
+import { getPlayerName } from './utils/user-helpers.js';
+
+// Import centralized error handler
+import { handleError } from './utils/error-handler.js';
+
 (function () {
   // Track if we're in coach mode
   let isCoachMode = false;
   let currentFilteredData = [];
+  let allGoalsData = []; // Store all goals before filtering
+  let currentStatusFilter = 'all';
+  let hideCompleted = false;
+
+  /**
+   * Get CSS class for progress bar color based on percentage
+   * @param {number} progress - Progress percentage (0-100)
+   * @returns {string} CSS class name for the progress bar color
+   */
+  function getProgressColorClass(progress) {
+    if (progress < 25) return 'progress-low';
+    if (progress < 75) return 'progress-medium';
+    return 'progress-high';
+  }
+
+  /**
+   * Check if a goal is overdue
+   * @param {Object} goal - Goal object with targetDate and status
+   * @returns {boolean} True if goal is overdue
+   */
+  function isGoalOverdue(goal) {
+    if (goal.status.toLowerCase() === 'completed') return false;
+    const target = new Date(goal.targetDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    target.setHours(0, 0, 0, 0);
+    return target < today;
+  }
+
+  /**
+   * Filter goals based on current filter settings
+   * @param {Array} goals - Array of goal objects
+   * @returns {Array} Filtered array of goals
+   */
+  function applyFilters(goals) {
+    let filtered = [...goals];
+
+    // Apply hide completed toggle
+    if (hideCompleted) {
+      filtered = filtered.filter((goal) => goal.status.toLowerCase() !== 'completed');
+    }
+
+    // Apply status filter
+    switch (currentStatusFilter) {
+      case 'active':
+        filtered = filtered.filter((goal) => goal.status.toLowerCase() !== 'completed');
+        break;
+      case 'in-progress':
+        filtered = filtered.filter((goal) =>
+          ['in progress', 'just started', 'nearly complete'].includes(
+            goal.status.toLowerCase()
+          )
+        );
+        break;
+      case 'not-started':
+        filtered = filtered.filter((goal) => goal.status.toLowerCase() === 'not started');
+        break;
+      case 'overdue':
+        filtered = filtered.filter((goal) => isGoalOverdue(goal));
+        break;
+      case 'completed':
+        filtered = filtered.filter((goal) => goal.status.toLowerCase() === 'completed');
+        break;
+      default:
+        // 'all' - no additional filtering
+        break;
+    }
+
+    return filtered;
+  }
 
   /**
    * Clean goal data to prevent undefined values in Firestore
@@ -136,24 +212,8 @@ import { displayDateGMT8 } from './timezone-utils.js';
     }
   }
 
-  /**
-   * Get player name by ID from Firestore (for coach mode)
-   * @param {string} playerId - Firebase user ID of the player
-   * @returns {Promise<string>} Player's full name or "Unknown Player" if not found
-   */
-  async function getPlayerName(playerId) {
-    try {
-      const playerDoc = await getDoc(doc(db, 'users', playerId));
-      if (playerDoc.exists()) {
-        const playerData = playerDoc.data();
-        return `${playerData.name.first} ${playerData.name.last}`.trim();
-      }
-      return 'Unknown Player';
-    } catch (error) {
-      console.error('Error fetching player name:', error);
-      return 'Unknown Player';
-    }
-  }
+  // Note: getPlayerName is now imported from utils/user-helpers.js
+  // It includes caching for better performance
 
   // Create goal card
   async function createGoalCard(goal) {
@@ -200,7 +260,7 @@ import { displayDateGMT8 } from './timezone-utils.js';
             <span class="progress-percentage">${goal.progress}%</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" style="width: ${goal.progress}%"></div>
+            <div class="progress-fill ${getProgressColorClass(goal.progress)}" style="width: ${goal.progress}%"></div>
           </div>
         </div>
         
@@ -299,12 +359,17 @@ import { displayDateGMT8 } from './timezone-utils.js';
   // Update goals statistics (works with filtered data in coach mode)
   function updateGoalsStats(goalsData = null) {
     const totalGoalsEl = document.getElementById('totalGoals');
+    const inProgressEl = document.getElementById('inProgressCount');
+    const overdueEl = document.getElementById('overdueCount');
     const completionRateEl = document.getElementById('completionRate');
 
-    const dataToUse = goalsData || currentFilteredData || [];
+    // Use allGoalsData for stats to show accurate totals
+    const dataToUse = goalsData || allGoalsData || [];
 
     if (!dataToUse || dataToUse.length === 0) {
       if (totalGoalsEl) totalGoalsEl.textContent = '0';
+      if (inProgressEl) inProgressEl.textContent = '0';
+      if (overdueEl) overdueEl.textContent = '0';
       if (completionRateEl) completionRateEl.textContent = '0%';
       return;
     }
@@ -313,13 +378,21 @@ import { displayDateGMT8 } from './timezone-utils.js';
     const completedGoals = dataToUse.filter(
       (goal) => goal.status.toLowerCase() === 'completed'
     ).length;
+    const inProgressGoals = dataToUse.filter(
+      (goal) => goal.status.toLowerCase() === 'in progress'
+    ).length;
+    const overdueGoals = dataToUse.filter((goal) => isGoalOverdue(goal)).length;
     const completionRate =
       totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
 
     if (totalGoalsEl) totalGoalsEl.textContent = totalGoals;
+    if (inProgressEl) inProgressEl.textContent = inProgressGoals;
+    if (overdueEl) overdueEl.textContent = overdueGoals;
     if (completionRateEl) completionRateEl.textContent = `${completionRate}%`;
 
-    console.log(`Stats updated: ${totalGoals} goals, ${completionRate}% completion rate`);
+    console.log(
+      `Stats updated: ${totalGoals} goals, ${inProgressGoals} in progress, ${overdueGoals} overdue, ${completionRate}% completion rate`
+    );
   }
 
   // Render all goals (works with filtered data in coach mode)
@@ -614,20 +687,59 @@ import { displayDateGMT8 } from './timezone-utils.js';
     console.log('Coach mode UI setup complete (no player filter for goals)');
   }
 
+  // Set up filter controls
+  function setupFilterControls() {
+    const statusFilter = document.getElementById('statusFilter');
+    const hideCompletedCheckbox = document.getElementById('hideCompleted');
+
+    if (statusFilter) {
+      statusFilter.addEventListener('change', async function () {
+        currentStatusFilter = this.value;
+        console.log(`Status filter changed to: ${currentStatusFilter}`);
+        await window.loadGoals();
+      });
+      console.log('Status filter set up');
+    }
+
+    if (hideCompletedCheckbox) {
+      hideCompletedCheckbox.addEventListener('change', async function () {
+        hideCompleted = this.checked;
+        console.log(`Hide completed: ${hideCompleted}`);
+        await window.loadGoals();
+      });
+      console.log('Hide completed toggle set up');
+    }
+  }
+
   // Set up "Add New Goal" button
   function setupAddGoalButton() {
     const addButton = document.getElementById('addGoalBtn');
 
     if (addButton) {
-      addButton.addEventListener('click', function () {
-        console.log('Opening goal modal');
+      addButton.addEventListener('click', async function () {
+        console.log('Add Goal button clicked');
+
+        // Wait a moment for modals.js to load if it hasn't yet
+        let attempts = 0;
+        const maxAttempts = 10;
+
+        while (!window.openSetGoalModal && attempts < maxAttempts) {
+          console.log('Waiting for modal function to be available...');
+          await new Promise((resolve) => setTimeout(resolve, 100));
+          attempts++;
+        }
 
         // Check if modal function exists (from modals.js)
         if (window.openSetGoalModal) {
+          console.log('Opening goal modal via window.openSetGoalModal');
           window.openSetGoalModal();
         } else {
-          console.warn('Goal modal function not available');
-          alert('Goal modal will be available when modals.js is loaded');
+          console.error('Goal modal function not available after waiting');
+          if (typeof showToast === 'function') {
+            showToast('Unable to open goal form. Please refresh the page.', 'error');
+          } else {
+            alert('Unable to open goal form. Please refresh the page.');
+          }
         }
       });
 
@@ -888,13 +1000,34 @@ import { displayDateGMT8 } from './timezone-utils.js';
       // Hide loading spinner
       hideLoadingSpinner('goalsContainer');
 
-      // Check if we have goals data
-      if (!dataToRender || dataToRender.length === 0) {
-        const emptyMessage = isCoachMode ? '' : '';
+      // Store all goals for stats calculation
+      allGoalsData = dataToRender;
+
+      // Apply current filters
+      const filteredGoals = applyFilters(dataToRender);
+
+      // Check if we have goals data after filtering
+      if (!filteredGoals || filteredGoals.length === 0) {
+        // Determine the appropriate empty message based on context
+        let emptyTitle = 'No Goals Set Yet';
+        let emptyMessage =
+          'Start your journey by setting your first goal. Track your progress and stay motivated!';
+        let emptyIcon = '🎯';
+
+        // Check if this is due to filtering
+        if (allGoalsData && allGoalsData.length > 0) {
+          emptyTitle = 'No Goals Match Filter';
+          emptyMessage =
+            'Try adjusting your filter settings or clear the "Hide Completed" checkbox to see more goals.';
+          emptyIcon = '🔍';
+        } else if (isCoachMode) {
+          emptyMessage =
+            'Set personal coaching goals to track your development and objectives.';
+        }
 
         showEmptyState('goalsContainer', {
-          icon: '🎯',
-          title: 'No Goals Set Yet',
+          icon: emptyIcon,
+          title: emptyTitle,
           message: emptyMessage,
           actionText: '+ Set New Goal',
           onAction: () => {
@@ -904,12 +1037,12 @@ import { displayDateGMT8 } from './timezone-utils.js';
           },
         });
 
-        updateGoalsStats(dataToRender);
+        updateGoalsStats(allGoalsData);
         return;
       }
 
       // Sort goals by priority and target date
-      const sortedGoals = [...dataToRender].sort((a, b) => {
+      const sortedGoals = [...filteredGoals].sort((a, b) => {
         // First sort by status (In Progress first, then others)
         if (a.status !== b.status) {
           if (a.status.toLowerCase().includes('progress')) return -1;
@@ -937,10 +1070,12 @@ import { displayDateGMT8 } from './timezone-utils.js';
         container.appendChild(card);
       }
 
-      // Update statistics
-      updateGoalsStats(sortedGoals);
+      // Update statistics (using all goals, not filtered)
+      updateGoalsStats(allGoalsData);
 
-      console.log(`Loaded and rendered ${sortedGoals.length} goals`);
+      console.log(
+        `Loaded and rendered ${sortedGoals.length} goals (${allGoalsData.length} total)`
+      );
     } catch (error) {
       console.error('Error loading goals:', error);
       hideLoadingSpinner('goalsContainer');
@@ -1009,6 +1144,11 @@ import { displayDateGMT8 } from './timezone-utils.js';
   async function initGoalsPage() {
     console.log('Goals page initializing...');
 
+    // Set up filter controls and add button early (before auth check)
+    // so UI is interactive even while waiting for authentication
+    setupFilterControls();
+    setupAddGoalButton();
+
     // Wait for authentication to be ready
     const authState = await waitForAuthentication();
 
@@ -1066,9 +1206,6 @@ import { displayDateGMT8 } from './timezone-utils.js';
 
       // Load goals for coach (their own goals)
       await window.loadGoals();
-
-      // Set up add goal button (works in both modes)
-      setupAddGoalButton();
     } else if (urlUserRole === 'coach' && actualUserRole !== 'coach') {
       // User tried to access coach mode but isn't a coach
       console.warn('User attempted to access coach mode without proper role');
@@ -1085,11 +1222,8 @@ import { displayDateGMT8 } from './timezone-utils.js';
       isCoachMode = false;
       console.log('Player mode - loading normal goals page');
 
-      // Render goals for player
-      await renderGoals();
-
-      // Set up add goal button
-      setupAddGoalButton();
+      // Load goals for player (uses loadGoals for filter support)
+      await window.loadGoals();
     }
 
     // Set up event delegation for goal actions

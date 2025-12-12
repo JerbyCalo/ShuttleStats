@@ -24,6 +24,12 @@ import { checkAuthenticationState } from './auth-utils.js';
 // Import timezone utilities for GMT+8 handling
 import { displayDateGMT8 } from './timezone-utils.js';
 
+// Import shared user helper utilities
+import { getPlayerName, getCoachName } from './utils/user-helpers.js';
+
+// Import centralized error handler
+import { handleError } from './utils/error-handler.js';
+
 (function () {
   // Track if we're in coach mode
   let isCoachMode = false;
@@ -106,43 +112,8 @@ import { displayDateGMT8 } from './timezone-utils.js';
     }
   }
 
-  /**
-   * Get player name by ID from Firestore (for coach mode)
-   * @param {string} playerId - Firebase user ID of the player
-   * @returns {Promise<string>} Player's full name or "Unknown Player" if not found
-   */
-  async function getPlayerName(playerId) {
-    try {
-      const playerDoc = await getDoc(doc(db, 'users', playerId));
-      if (playerDoc.exists()) {
-        const playerData = playerDoc.data();
-        return `${playerData.name.first} ${playerData.name.last}`.trim();
-      }
-      return 'Unknown Player';
-    } catch (error) {
-      console.error('Error fetching player name:', error);
-      return 'Unknown Player';
-    }
-  }
-
-  /**
-   * Get coach name by ID from Firestore (for player mode feedback display)
-   * @param {string} coachId - Firebase user ID of the coach
-   * @returns {Promise<string>} Coach's full name or "Coach" if not found
-   */
-  async function getCoachName(coachId) {
-    try {
-      const coachDoc = await getDoc(doc(db, 'users', coachId));
-      if (coachDoc.exists()) {
-        const coachData = coachDoc.data();
-        return `${coachData.name.first} ${coachData.name.last}`.trim();
-      }
-      return 'Coach';
-    } catch (error) {
-      console.error('Error fetching coach name:', error);
-      return 'Coach';
-    }
-  }
+  // Note: getPlayerName and getCoachName are now imported from utils/user-helpers.js
+  // They include caching for better performance
 
   /**
    * Submit feedback for a training session (coach only)
@@ -219,12 +190,7 @@ import { displayDateGMT8 } from './timezone-utils.js';
       console.log('Feedback submitted for session:', sessionId);
       return true;
     } catch (error) {
-      console.error('Error submitting feedback:', error);
-
-      if (typeof showToast === 'function') {
-        showToast('Failed to submit feedback. Please try again.', 'error');
-      }
-
+      handleError(error, 'Submit training feedback', { category: 'save' });
       return false;
     } finally {
       // Re-enable submit button

@@ -5,6 +5,7 @@
   "description": "ShuttleStats static web app",
   "type": "module",
   "scripts": {
+    "build": "node build.js",
     "lint": "eslint \"public/js/**/*.js\"",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

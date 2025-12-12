@@ -136,6 +136,27 @@
 
         <!-- Page Content -->
         <div class="page-content">
+          <!-- Filter Bar -->
+          <div class="filter-bar">
+            <div class="filter-group">
+              <label for="statusFilter">Filter by Status:</label>
+              <select id="statusFilter" class="filter-select">
+                <option value="all">All Goals</option>
+                <option value="active">Active (Not Completed)</option>
+                <option value="in-progress">In Progress</option>
+                <option value="not-started">Not Started</option>
+                <option value="overdue">Overdue</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label class="archive-toggle">
+                <input type="checkbox" id="hideCompleted" />
+                <span class="toggle-label">Hide Completed</span>
+              </label>
+            </div>
+          </div>
+
           <!-- Action Bar -->
           <div class="action-bar">
             <button id="addGoalBtn" class="add-btn">
@@ -146,6 +167,14 @@
               <div class="stat-item">
                 <span class="stat-number" id="totalGoals">0</span>
                 <span class="stat-label">Total Goals</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number" id="inProgressCount">0</span>
+                <span class="stat-label">In Progress</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-number stat-overdue" id="overdueCount">0</span>
+                <span class="stat-label">Overdue</span>
               </div>
               <div class="stat-item">
                 <span class="stat-number" id="completionRate">0%</span>

@@ -18,6 +18,16 @@ import {
   // Chart instances storage
   let charts = {};
 
+  // Current time period filter (in days, or 'all')
+  let currentPeriod = 180;
+
+  // Cached data for filtering
+  let cachedData = {
+    trainingSessions: [],
+    matches: [],
+    goals: [],
+  };
+
   // Color palette from project theme
   const colors = {
     primary: '#1211ca',
@@ -117,6 +127,35 @@ import {
   // ============================================
   // DATA PROCESSING FUNCTIONS
   // ============================================
+
+  // Filter data by current time period
+  function filterByPeriod(data, period) {
+    if (period === 'all') return data;
+
+    const now = new Date();
+    const cutoffDate = new Date(now.getTime() - period * 24 * 60 * 60 * 1000);
+
+    return data.filter((item) => {
+      const itemDate = new Date(item.date);
+      return itemDate >= cutoffDate;
+    });
+  }
+
+  // Get period label for display
+  function getPeriodLabel(period) {
+    switch (period) {
+      case 30:
+        return 'Last 30 Days';
+      case 90:
+        return 'Last 3 Months';
+      case 180:
+        return 'Last 6 Months';
+      case 'all':
+        return 'All Time';
+      default:
+        return 'Last 6 Months';
+    }
+  }
 
   // Get month name from date
   function getMonthName(date) {
@@ -373,12 +412,14 @@ import {
     const totalSessionsEl = document.getElementById('totalSessions');
     if (totalSessionsEl) {
       totalSessionsEl.textContent = trainingSessions.length;
+      totalSessionsEl.classList.remove('skeleton');
     }
 
     // Total matches
     const totalMatchesEl = document.getElementById('totalMatches');
     if (totalMatchesEl) {
       totalMatchesEl.textContent = matches.length;
+      totalMatchesEl.classList.remove('skeleton');
     }
 
     // Win rate
@@ -388,6 +429,7 @@ import {
       const totalMatches = matches.length;
       const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0;
       winRateEl.textContent = `${winRate}%`;
+      winRateEl.classList.remove('skeleton');
     }
 
     // Average intensity
@@ -419,7 +461,160 @@ import {
 
       const avgIntensity = validCount > 0 ? (totalIntensity / validCount).toFixed(1) : 0;
       avgIntensityEl.textContent = avgIntensity;
+      avgIntensityEl.classList.remove('skeleton');
+    } else if (avgIntensityEl) {
+      avgIntensityEl.textContent = '-';
+      avgIntensityEl.classList.remove('skeleton');
     }
+
+    // Update comparison metrics
+    updateComparisonMetrics(trainingSessions, matches);
+  }
+
+  // Calculate and display comparison metrics (vs previous period)
+  function updateComparisonMetrics(trainingSessions, matches) {
+    const now = new Date();
+    const periodDays = currentPeriod === 'all' ? 180 : currentPeriod;
+    const halfPeriod = periodDays / 2;
+
+    const midDate = new Date(now.getTime() - halfPeriod * 24 * 60 * 60 * 1000);
+    const startDate = new Date(now.getTime() - periodDays * 24 * 60 * 60 * 1000);
+
+    // Sessions comparison
+    const recentSessions = trainingSessions.filter(
+      (s) => new Date(s.date) >= midDate
+    ).length;
+    const previousSessions = trainingSessions.filter((s) => {
+      const d = new Date(s.date);
+      return d >= startDate && d < midDate;
+    }).length;
+
+    updateComparisonElement(
+      'sessionsComparison',
+      recentSessions,
+      previousSessions,
+      'vs prev period'
+    );
+
+    // Matches comparison
+    const recentMatches = matches.filter((m) => new Date(m.date) >= midDate).length;
+    const previousMatches = matches.filter((m) => {
+      const d = new Date(m.date);
+      return d >= startDate && d < midDate;
+    }).length;
+
+    updateComparisonElement(
+      'matchesComparison',
+      recentMatches,
+      previousMatches,
+      'vs prev period'
+    );
+
+    // Win rate comparison
+    const recentMatchesData = matches.filter((m) => new Date(m.date) >= midDate);
+    const previousMatchesData = matches.filter((m) => {
+      const d = new Date(m.date);
+      return d >= startDate && d < midDate;
+    });
+
+    const recentWinRate =
+      recentMatchesData.length > 0
+        ? Math.round(
+            (recentMatchesData.filter((m) => m.result?.toLowerCase() === 'win').length /
+              recentMatchesData.length) *
+              100
+          )
+        : 0;
+    const previousWinRate =
+      previousMatchesData.length > 0
+        ? Math.round(
+            (previousMatchesData.filter((m) => m.result?.toLowerCase() === 'win').length /
+              previousMatchesData.length) *
+              100
+          )
+        : 0;
+
+    updateComparisonElement(
+      'winRateComparison',
+      recentWinRate,
+      previousWinRate,
+      'vs prev period',
+      true
+    );
+
+    // Intensity comparison
+    const calcAvgIntensity = (sessions) => {
+      let total = 0,
+        count = 0;
+      sessions.forEach((s) => {
+        const val = parseInt(s.intensity);
+        if (!isNaN(val)) {
+          total += val;
+          count++;
+        }
+      });
+      return count > 0 ? total / count : 0;
+    };
+
+    const recentIntensity = calcAvgIntensity(
+      trainingSessions.filter((s) => new Date(s.date) >= midDate)
+    );
+    const previousIntensity = calcAvgIntensity(
+      trainingSessions.filter((s) => {
+        const d = new Date(s.date);
+        return d >= startDate && d < midDate;
+      })
+    );
+
+    updateComparisonElement(
+      'intensityComparison',
+      recentIntensity,
+      previousIntensity,
+      'vs prev period'
+    );
+  }
+
+  // Update a single comparison element
+  function updateComparisonElement(
+    elementId,
+    current,
+    previous,
+    label,
+    isPercentage = false
+  ) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+
+    if (previous === 0 && current === 0) {
+      el.innerHTML = '<span class="neutral">No change</span>';
+      el.className = 'stat-comparison neutral';
+      return;
+    }
+
+    let change;
+    if (isPercentage) {
+      change = current - previous;
+    } else {
+      change =
+        previous > 0
+          ? Math.round(((current - previous) / previous) * 100)
+          : current > 0
+            ? 100
+            : 0;
+    }
+
+    const isPositive = change > 0;
+    const isNeutral = change === 0;
+
+    const arrow = isPositive ? '↑' : isNeutral ? '→' : '↓';
+    const displayChange = isPercentage ? `${Math.abs(change)}pp` : `${Math.abs(change)}%`;
+
+    el.innerHTML = `
+      <span class="comparison-arrow">${arrow}</span>
+      <span>${isNeutral ? 'No change' : displayChange}</span>
+      <span class="comparison-text">${label}</span>
+    `;
+    el.className = `stat-comparison ${isPositive ? 'positive' : isNeutral ? 'neutral' : 'negative'}`;
   }
 
   // ============================================
@@ -833,22 +1028,327 @@ import {
     charts = {};
   }
 
+  // ============================================
+  // SKELETON LOADING FUNCTIONS
+  // ============================================
+
+  // Show skeleton loaders
+  function showSkeletons() {
+    const skeletonIds = [
+      'performanceSkeleton',
+      'intensitySkeleton',
+      'matchResultsSkeleton',
+      'weeklyActivitySkeleton',
+      'goalsProgressSkeleton',
+    ];
+
+    skeletonIds.forEach((id) => {
+      const skeleton = document.getElementById(id);
+      if (skeleton) {
+        skeleton.classList.remove('hidden');
+      }
+    });
+
+    // Show skeleton state for stat values
+    document.querySelectorAll('.stat-value').forEach((el) => {
+      el.classList.add('skeleton');
+      el.textContent = '';
+    });
+  }
+
+  // Hide skeleton loaders
+  function hideSkeletons() {
+    const skeletonIds = [
+      'performanceSkeleton',
+      'intensitySkeleton',
+      'matchResultsSkeleton',
+      'weeklyActivitySkeleton',
+      'goalsProgressSkeleton',
+    ];
+
+    skeletonIds.forEach((id) => {
+      const skeleton = document.getElementById(id);
+      if (skeleton) {
+        skeleton.classList.add('hidden');
+      }
+    });
+  }
+
+  // ============================================
+  // EMPTY STATE FUNCTIONS
+  // ============================================
+
+  // Check and show empty state if no data
+  function checkEmptyState(trainingSessions, matches) {
+    const emptyState = document.getElementById('emptyState');
+    const analyticsDashboard = document.getElementById('analyticsDashboard');
+    const statsOverview = document.querySelector('.stats-overview');
+    const timeFilterContainer = document.querySelector('.time-filter-container');
+
+    if (trainingSessions.length === 0 && matches.length === 0) {
+      // Show empty state
+      if (emptyState) emptyState.style.display = 'block';
+      if (analyticsDashboard) analyticsDashboard.style.display = 'none';
+      if (statsOverview) statsOverview.style.display = 'none';
+      if (timeFilterContainer) timeFilterContainer.style.display = 'none';
+      return true;
+    } else {
+      // Show dashboard
+      if (emptyState) emptyState.style.display = 'none';
+      if (analyticsDashboard) analyticsDashboard.style.display = 'flex';
+      if (statsOverview) statsOverview.style.display = 'grid';
+      if (timeFilterContainer) timeFilterContainer.style.display = 'flex';
+      return false;
+    }
+  }
+
+  // ============================================
+  // ACHIEVEMENT HIGHLIGHTS FUNCTIONS
+  // ============================================
+
+  // Generate and display achievement highlights
+  function updateAchievementHighlights(trainingSessions, matches) {
+    const highlightsSection = document.getElementById('achievementHighlights');
+    const highlightsList = document.getElementById('highlightsList');
+
+    if (!highlightsSection || !highlightsList) return;
+
+    const highlights = [];
+
+    // Check for training milestones
+    if (trainingSessions.length >= 100) {
+      highlights.push({
+        badge: '🏆',
+        text: 'Century Club!',
+        value: `${trainingSessions.length} sessions`,
+      });
+    } else if (trainingSessions.length >= 50) {
+      highlights.push({
+        badge: '⭐',
+        text: 'Training Champion',
+        value: `${trainingSessions.length} sessions`,
+      });
+    } else if (trainingSessions.length >= 25) {
+      highlights.push({
+        badge: '💪',
+        text: 'Dedicated Athlete',
+        value: `${trainingSessions.length} sessions`,
+      });
+    } else if (trainingSessions.length >= 10) {
+      highlights.push({
+        badge: '🌟',
+        text: 'Getting Started',
+        value: `${trainingSessions.length} sessions`,
+      });
+    }
+
+    // Check for match milestones
+    if (matches.length >= 50) {
+      highlights.push({
+        badge: '🎯',
+        text: 'Match Master',
+        value: `${matches.length} matches`,
+      });
+    } else if (matches.length >= 25) {
+      highlights.push({
+        badge: '🏸',
+        text: 'Court Regular',
+        value: `${matches.length} matches`,
+      });
+    } else if (matches.length >= 10) {
+      highlights.push({
+        badge: '🎮',
+        text: 'Competitor',
+        value: `${matches.length} matches`,
+      });
+    }
+
+    // Check win rate
+    const wins = matches.filter((m) => m.result?.toLowerCase() === 'win').length;
+    const winRate = matches.length > 0 ? Math.round((wins / matches.length) * 100) : 0;
+
+    if (winRate >= 75 && matches.length >= 10) {
+      highlights.push({
+        badge: '👑',
+        text: 'Winning Streak',
+        value: `${winRate}% win rate`,
+      });
+    } else if (winRate >= 60 && matches.length >= 10) {
+      highlights.push({ badge: '🔥', text: 'On Fire!', value: `${winRate}% win rate` });
+    }
+
+    // Check for training streak (consecutive days in last 30 days)
+    const streak = calculateTrainingStreak(trainingSessions);
+    if (streak >= 7) {
+      highlights.push({
+        badge: '📈',
+        text: 'Weekly Warrior',
+        value: `${streak} day streak`,
+      });
+    } else if (streak >= 3) {
+      highlights.push({ badge: '⚡', text: 'On a Roll', value: `${streak} day streak` });
+    }
+
+    // Check for high intensity training
+    const highIntensitySessions = trainingSessions.filter((s) => {
+      const intensity = parseInt(s.intensity);
+      return !isNaN(intensity) && intensity >= 8;
+    }).length;
+
+    if (highIntensitySessions >= 10) {
+      highlights.push({
+        badge: '💥',
+        text: 'Intensity Beast',
+        value: `${highIntensitySessions} intense sessions`,
+      });
+    }
+
+    // Only show if there are highlights
+    if (highlights.length > 0) {
+      highlightsSection.style.display = 'block';
+      highlightsList.innerHTML = highlights
+        .map(
+          (h) => `
+        <div class="highlight-item">
+          <span class="highlight-badge">${h.badge}</span>
+          <span class="highlight-text">${h.text} <span class="highlight-value">${h.value}</span></span>
+        </div>
+      `
+        )
+        .join('');
+    } else {
+      highlightsSection.style.display = 'none';
+    }
+  }
+
+  // Calculate training streak
+  function calculateTrainingStreak(trainingSessions) {
+    if (trainingSessions.length === 0) return 0;
+
+    // Get unique dates sorted descending
+    const dates = [
+      ...new Set(
+        trainingSessions.map((s) => {
+          const d = new Date(s.date);
+          return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        })
+      ),
+    ]
+      .sort()
+      .reverse();
+
+    if (dates.length === 0) return 0;
+
+    let streak = 1;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const lastSessionDate = new Date(dates[0]);
+    const daysSinceLastSession = Math.floor(
+      (today - lastSessionDate) / (24 * 60 * 60 * 1000)
+    );
+
+    // If last session was more than 1 day ago, no current streak
+    if (daysSinceLastSession > 1) return 0;
+
+    // Count consecutive days
+    for (let i = 1; i < dates.length; i++) {
+      const current = new Date(dates[i - 1]);
+      const previous = new Date(dates[i]);
+      const diff = Math.floor((current - previous) / (24 * 60 * 60 * 1000));
+
+      if (diff === 1) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    return streak;
+  }
+
+  // ============================================
+  // TIME FILTER FUNCTIONS
+  // ============================================
+
+  // Initialize time filter buttons
+  function initTimeFilters() {
+    const filterBtns = document.querySelectorAll('.time-filter-btn');
+
+    filterBtns.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        // Update active state
+        filterBtns.forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        // Get period value
+        const period = btn.dataset.period;
+        currentPeriod = period === 'all' ? 'all' : parseInt(period);
+
+        // Re-render charts with filtered data
+        await renderWithCurrentPeriod();
+      });
+    });
+  }
+
+  // Render charts with current period filter
+  async function renderWithCurrentPeriod() {
+    showSkeletons();
+
+    // Filter cached data by period
+    const filteredSessions = filterByPeriod(cachedData.trainingSessions, currentPeriod);
+    const filteredMatches = filterByPeriod(cachedData.matches, currentPeriod);
+
+    // Update period labels
+    const periodLabel = getPeriodLabel(currentPeriod);
+    document.querySelectorAll('.chart-period').forEach((el) => {
+      if (el.id) {
+        el.textContent = periodLabel;
+      }
+    });
+
+    // Destroy existing charts
+    destroyCharts();
+
+    // Check empty state
+    if (checkEmptyState(filteredSessions, filteredMatches)) {
+      hideSkeletons();
+      return;
+    }
+
+    // Process and render with filtered data
+    const performanceData = processPerformanceData(filteredSessions, filteredMatches);
+    const intensityData = processIntensityData(filteredSessions);
+    const matchResultsData = processMatchResults(filteredMatches);
+    const weeklyActivityData = processWeeklyActivity(filteredSessions, filteredMatches);
+    const goalsProgressData = processGoalsProgress(cachedData.goals); // Goals not filtered
+    const insights = calculateInsights(filteredSessions, filteredMatches);
+
+    // Update stats and charts
+    updateStatsCards(filteredSessions, filteredMatches);
+    updateAchievementHighlights(filteredSessions, filteredMatches);
+
+    initPerformanceChart(performanceData, insights);
+    initIntensityChart(intensityData);
+    initMatchResultsChart(matchResultsData);
+    initWeeklyActivityChart(weeklyActivityData);
+    initGoalsProgressChart(goalsProgressData);
+
+    hideSkeletons();
+  }
+
   // Main function to load all data and initialize charts
   async function loadProgressData() {
     try {
-      // Show loading state
-      if (typeof showGlobalLoader === 'function') {
-        showGlobalLoader('Loading progress data...');
-      }
+      // Show skeleton loaders
+      showSkeletons();
 
       // Get current user ID
       const currentUserId =
         auth.currentUser?.uid || sessionStorage.getItem('currentUserId');
       if (!currentUserId) {
         console.error('No user ID available');
-        if (typeof hideLoadingSpinner === 'function') {
-          hideLoadingSpinner();
-        }
+        hideSkeletons();
         return;
       }
 
@@ -861,22 +1361,41 @@ import {
         fetchGoals(currentUserId),
       ]);
 
+      // Cache the data for filtering
+      cachedData = { trainingSessions, matches, goals };
+
       console.log('Data fetched:', {
         trainingSessions: trainingSessions.length,
         matches: matches.length,
         goals: goals.length,
       });
 
+      // Check for empty state
+      if (checkEmptyState(trainingSessions, matches)) {
+        hideSkeletons();
+        return;
+      }
+
+      // Update achievement highlights with all data
+      updateAchievementHighlights(trainingSessions, matches);
+
+      // Initialize time filters
+      initTimeFilters();
+
+      // Filter data by current period
+      const filteredSessions = filterByPeriod(trainingSessions, currentPeriod);
+      const filteredMatches = filterByPeriod(matches, currentPeriod);
+
       // Process data for charts
-      const performanceData = processPerformanceData(trainingSessions, matches);
-      const intensityData = processIntensityData(trainingSessions);
-      const matchResultsData = processMatchResults(matches);
-      const weeklyActivityData = processWeeklyActivity(trainingSessions, matches);
+      const performanceData = processPerformanceData(filteredSessions, filteredMatches);
+      const intensityData = processIntensityData(filteredSessions);
+      const matchResultsData = processMatchResults(filteredMatches);
+      const weeklyActivityData = processWeeklyActivity(filteredSessions, filteredMatches);
       const goalsProgressData = processGoalsProgress(goals);
-      const insights = calculateInsights(trainingSessions, matches);
+      const insights = calculateInsights(filteredSessions, filteredMatches);
 
       // Update stats cards
-      updateStatsCards(trainingSessions, matches);
+      updateStatsCards(filteredSessions, filteredMatches);
 
       // Initialize all charts with real data
       initPerformanceChart(performanceData, insights);
@@ -887,16 +1406,11 @@ import {
 
       console.log('All charts initialized with real data');
 
-      // Hide loading state
-      if (typeof hideLoadingSpinner === 'function') {
-        hideLoadingSpinner();
-      }
+      // Hide skeleton loaders
+      hideSkeletons();
     } catch (error) {
       console.error('Error loading progress data:', error);
-
-      if (typeof hideLoadingSpinner === 'function') {
-        hideLoadingSpinner();
-      }
+      hideSkeletons();
 
       if (typeof showToast === 'function') {
         showToast('Failed to load progress data. Please refresh the page.', 'error');

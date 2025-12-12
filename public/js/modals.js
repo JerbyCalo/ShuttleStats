@@ -560,7 +560,7 @@ async function handleGoalSubmit(event) {
     category: formData.get('goalCategory') || 'Technical',
     priority: formData.get('goalPriority') || 'Medium',
     status: formData.get('goalStatus') || 'Not Started',
-    targetDate: formData.get('goalDeadline') || '',
+    targetDate: formData.get('goalTargetDate') || '',
     progress: parseInt(formData.get('goalProgress')) || 0,
     notes: formData.get('goalNotes')?.trim() || '',
     target: formData.get('goalTarget') || '',

@@ -695,6 +695,350 @@ body {
   line-height: 1.6;
 }
 
+/* ==========================================
+   ACHIEVEMENT HIGHLIGHTS SECTION
+   ========================================== */
+.achievement-highlights {
+  background: linear-gradient(
+    135deg,
+    rgba(18, 17, 202, 0.05) 0%,
+    rgba(249, 179, 20, 0.08) 100%
+  );
+  border: 2px solid var(--secondary);
+  border-radius: 16px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  animation: slideIn 0.5s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.highlights-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.highlights-icon {
+  font-size: 1.5rem;
+}
+
+.highlights-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.highlights-list {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.highlight-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border-radius: 12px;
+  padding: 12px 18px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  animation: popIn 0.4s ease;
+}
+
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.highlight-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(18, 17, 202, 0.15);
+}
+
+.highlight-badge {
+  font-size: 1.3rem;
+}
+
+.highlight-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.highlight-value {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* ==========================================
+   TIME PERIOD FILTER
+   ========================================== */
+.time-filter-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-label {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.time-filter-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.time-filter-btn {
+  padding: 10px 18px;
+  border: 2px solid var(--border);
+  background: white;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.time-filter-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(18, 17, 202, 0.05);
+}
+
+.time-filter-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(18, 17, 202, 0.25);
+}
+
+/* ==========================================
+   COMPARISON METRICS
+   ========================================== */
+.stat-comparison {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin: 8px 0 4px;
+  min-height: 22px;
+}
+
+.stat-comparison.positive {
+  color: #10b981;
+}
+
+.stat-comparison.negative {
+  color: #ef4444;
+}
+
+.stat-comparison.neutral {
+  color: var(--muted);
+}
+
+.comparison-arrow {
+  font-size: 0.75rem;
+}
+
+.comparison-text {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin-left: 2px;
+}
+
+/* ==========================================
+   LOADING SKELETONS
+   ========================================== */
+.chart-skeleton {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  border-radius: 14px;
+  padding: 28px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.chart-skeleton.hidden {
+  display: none;
+}
+
+.skeleton-header {
+  height: 24px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+  width: 60%;
+}
+
+.skeleton-chart {
+  flex: 1;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 12px;
+  min-height: 200px;
+}
+
+.skeleton-chart-circle {
+  width: 180px;
+  height: 180px;
+  margin: 40px auto;
+  border-radius: 50%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Skeleton for stat cards */
+.stat-value.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+  min-width: 60px;
+  min-height: 40px;
+  color: transparent !important;
+}
+
+/* ==========================================
+   EMPTY STATE
+   ========================================== */
+.empty-state {
+  text-align: center;
+  padding: 60px 40px;
+  background: linear-gradient(
+    135deg,
+    rgba(18, 17, 202, 0.03) 0%,
+    rgba(249, 179, 20, 0.05) 100%
+  );
+  border: 2px dashed var(--border);
+  border-radius: 20px;
+  margin: 24px 0;
+}
+
+.empty-state-icon {
+  font-size: 4rem;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+.empty-state-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin: 0 0 12px;
+}
+
+.empty-state-message {
+  font-size: 1.1rem;
+  color: var(--muted);
+  max-width: 500px;
+  margin: 0 auto 28px;
+  line-height: 1.7;
+}
+
+.empty-state-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.empty-state-btn {
+  padding: 14px 28px;
+  border-radius: 30px;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-state-btn.primary {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 16px rgba(18, 17, 202, 0.25);
+}
+
+.empty-state-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(18, 17, 202, 0.35);
+}
+
+.empty-state-btn.secondary {
+  background: white;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+}
+
+.empty-state-btn.secondary:hover {
+  background: var(--primary);
+  color: white;
+}
+
+.empty-state-tips {
+  background: white;
+  border-radius: 12px;
+  padding: 16px 24px;
+  display: inline-block;
+  border-left: 4px solid var(--secondary);
+  text-align: left;
+}
+
+.empty-state-tips p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
 @media (max-width: 768px) {
   .hamburger-btn {
     top: 20px;
